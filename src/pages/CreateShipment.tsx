@@ -21,7 +21,8 @@ interface Company {
   id: string;
   name: string;
   type: string;
-  address: string;
+  address?: string;
+  location_address?: string;
   category_display_name?: string;
 }
 
@@ -69,7 +70,7 @@ const CreateShipment: React.FC = () => {
     pickup_longitude: '',
     delivery_latitude: '',
     delivery_longitude: '',
-    driver_entry_type: 'registered',
+    driver_entry_type: 'manual',
     manual_driver_name: '',
     manual_vehicle_number: ''
   });
@@ -82,9 +83,7 @@ const CreateShipment: React.FC = () => {
     try {
       // Fetch companies
       const { data: companiesData, error: companiesError } = await supabase
-        .from('companies')
-        .select('*')
-        .order('name');
+        .rpc('get_companies_for_selection');
 
       if (companiesError) throw companiesError;
 

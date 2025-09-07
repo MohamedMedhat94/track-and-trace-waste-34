@@ -37,7 +37,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
     disposal_method: editingShipment?.disposal_method || '',
     pickup_date: editingShipment?.pickup_date ? new Date(editingShipment.pickup_date).toISOString().split('T')[0] : '',
     delivery_date: editingShipment?.delivery_date ? new Date(editingShipment.delivery_date).toISOString().split('T')[0] : '',
-    driver_entry_type: editingShipment?.driver_entry_type || 'registered',
+    driver_entry_type: editingShipment?.driver_entry_type || 'manual',
     manual_driver_name: editingShipment?.manual_driver_name || '',
     manual_vehicle_number: editingShipment?.manual_vehicle_number || ''
   });
@@ -54,9 +54,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
   const fetchCompanies = async () => {
     try {
       const { data, error } = await supabase
-        .from('companies')
-        .select('*')
-        .order('name');
+        .rpc('get_companies_for_selection');
 
       if (error) throw error;
       setCompanies(data || []);
