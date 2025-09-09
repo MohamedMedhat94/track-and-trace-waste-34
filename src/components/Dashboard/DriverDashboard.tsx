@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import DriverLocationRegister from '@/components/Driver/DriverLocationRegister';
 import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
 import { 
@@ -34,32 +35,46 @@ const DriverDashboard: React.FC = () => {
     totalDistance: '2,456 km'
   };
 
-  const myDeliveries = [
-    {
-      id: 'SH001',
-      generator: 'ABC Manufacturing',
-      recycler: 'EcoRecycle Industries',
-      wasteType: 'Electronic Waste',
-      quantity: '250 kg',
-      status: 'in_transit',
-      canStartDelivery: false,
-      canEndDelivery: true,
-      pickupAddress: '123 Factory St, Industrial Zone',
-      deliveryAddress: '456 Recycle Ave, Green District',
-    },
-    {
-      id: 'SH008',
-      generator: 'Green Factory',
-      recycler: 'CleanCycle Solutions',
-      wasteType: 'Metal Scrap',
-      quantity: '1,200 kg',
-      status: 'ready_for_pickup',
-      canStartDelivery: true,
-      canEndDelivery: false,
-      pickupAddress: '789 Production Rd, Manufacturing Park',
-      deliveryAddress: '321 Processing St, Eco Center',
-    },
-  ];
+  const [myDeliveries, setMyDeliveries] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDriverShipments();
+  }, [user]);
+
+  const fetchDriverShipments = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase.rpc('get_driver_shipments');
+      
+      if (error) throw error;
+      
+      const transformedData = (data || []).map(shipment => ({
+        id: shipment.shipment_number,
+        shipmentId: shipment.id,
+        generator: shipment.generator_company_name,
+        recycler: shipment.recycler_company_name,
+        wasteType: 'نفايات متنوعة',
+        quantity: `${shipment.quantity || 0} kg`,
+        status: shipment.status === 'pending' ? 'ready_for_pickup' : shipment.status,
+        canStartDelivery: shipment.status === 'pending',
+        canEndDelivery: shipment.status === 'in_transit',
+        pickupAddress: shipment.pickup_location || 'موقع الاستلام',
+        deliveryAddress: shipment.delivery_location || 'موقع التسليم',
+      }));
+      
+      setMyDeliveries(transformedData);
+    } catch (error: any) {
+      console.error('خطأ في جلب شحنات السائق:', error);
+      toast({
+        title: "خطأ في جلب الشحنات",
+        description: error.message || "حدث خطأ غير متوقع",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -225,8 +240,17 @@ const DriverDashboard: React.FC = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {myDeliveries.map((delivery) => (
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-muted-foreground">جاري تحميل الشحنات...</div>
+            </div>
+          ) : myDeliveries.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-muted-foreground">لا توجد شحنات مخصصة لك حالياً</div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myDeliveries.map((delivery) => (
               <div
                 key={delivery.id}
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -310,7 +334,8 @@ const DriverDashboard: React.FC = () => {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

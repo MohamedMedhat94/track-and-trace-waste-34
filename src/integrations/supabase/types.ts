@@ -1107,6 +1107,21 @@ export type Database = {
           total_shipments: number
         }[]
       }
+      get_driver_shipments: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          delivery_location: string
+          generator_company_name: string
+          id: string
+          pickup_location: string
+          quantity: number
+          recycler_company_name: string
+          shipment_number: string
+          status: string
+          transporter_company_name: string
+        }[]
+      }
       get_user_credentials: {
         Args: { target_user_id: string }
         Returns: {

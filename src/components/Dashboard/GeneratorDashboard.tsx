@@ -41,17 +41,7 @@ const GeneratorDashboard: React.FC = () => {
     try {
       setIsLoading(true);
       const { data, error } = await supabase
-        .from('shipments')
-        .select(`
-          *,
-          generator_company:companies!shipments_generator_company_id_fkey(name),
-          transporter_company:companies!shipments_transporter_company_id_fkey(name),
-          recycler_company:companies!shipments_recycler_company_id_fkey(name),
-          driver:drivers(name, phone),
-          waste_type:waste_types(name)
-        `)
-        .eq('generator_company_id', user.companyId)
-        .order('created_at', { ascending: false });
+        .rpc('get_company_shipments', { company_type: 'generator' });
 
       if (error) throw error;
 
@@ -59,9 +49,9 @@ const GeneratorDashboard: React.FC = () => {
       
       // Calculate stats
       const total = data?.length || 0;
-      const active = data?.filter(s => s.status === 'pending' || s.status === 'in_transit' || s.status === 'sorting' || s.status === 'recycling').length || 0;
-      const completed = data?.filter(s => s.status === 'completed').length || 0;
-      const totalWeight = data?.reduce((acc, s) => acc + (parseFloat(s.quantity?.toString() || '0') || 0), 0) || 0;
+      const active = data?.filter((s: any) => ['pending', 'in_transit', 'sorting', 'recycling'].includes(s.status)).length || 0;
+      const completed = data?.filter((s: any) => s.status === 'completed').length || 0;
+      const totalWeight = data?.reduce((acc: number, s: any) => acc + (parseFloat(s.quantity?.toString() || '0') || 0), 0) || 0;
 
       setStats({
         totalShipments: total,
@@ -230,20 +220,20 @@ const GeneratorDashboard: React.FC = () => {
                       </Badge>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">الناقل:</span>
-                        <p className="font-medium">{shipment.transporter_company?.name || 'غير محدد'}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">المدور:</span>
-                        <p className="font-medium">{shipment.recycler_company?.name || 'غير محدد'}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">نوع النفايات:</span>
-                        <p className="font-medium">{shipment.waste_type?.name || 'غير محدد'}</p>
-                      </div>
-                    </div>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                       <div>
+                         <span className="text-muted-foreground">الناقل:</span>
+                         <p className="font-medium">{shipment.transporter_company_name || 'غير محدد'}</p>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground">المدور:</span>
+                         <p className="font-medium">{shipment.recycler_company_name || 'غير محدد'}</p>
+                       </div>
+                       <div>
+                         <span className="text-muted-foreground">نوع النفايات:</span>
+                         <p className="font-medium">{shipment.waste_type_name || 'غير محدد'}</p>
+                       </div>
+                     </div>
                     
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm text-muted-foreground">
