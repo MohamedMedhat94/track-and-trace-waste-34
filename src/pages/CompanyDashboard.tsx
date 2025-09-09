@@ -41,39 +41,68 @@ const CompanyDashboard = () => {
   const [companyInfo, setCompanyInfo] = useState<any>(null);
 
   useEffect(() => {
-    if (profile?.company_id) {
-      fetchCompanyData();
-    }
+    fetchCompanyData();
   }, [profile]);
 
-  const fetchCompanyData = async () => {
-    if (!profile?.company_id) return;
+const fetchCompanyData = async () => {
 
     try {
       setLoading(true);
 
-      // Get company info
-      const { data: company, error: companyError } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', profile.company_id)
-        .single();
+      // Fetch company info and shipments
+      let shipmentsData: CompanyShipment[] = [];
 
-      if (companyError) throw companyError;
-      setCompanyInfo(company);
+      if (profile?.company_id) {
+        const { data: company, error: companyError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', profile.company_id)
+          .single();
 
-      // Get company shipments based on company type
-      let companyType = 'generator'; // default
-      if (profile.role === 'transporter') companyType = 'transporter';
-      else if (profile.role === 'recycler') companyType = 'recycler';
-      else if (profile.role === 'generator') companyType = 'generator';
+        if (companyError) throw companyError;
+        setCompanyInfo(company);
 
-      const { data: shipmentsData, error: shipmentsError } = await supabase
-        .rpc('get_company_shipments', { company_type: companyType });
+        // Get company shipments based on company type
+        let companyType = 'generator';
+        if (profile.role === 'transporter') companyType = 'transporter';
+        else if (profile.role === 'recycler') companyType = 'recycler';
 
-      if (shipmentsError) throw shipmentsError;
-      
-      setShipments(shipmentsData || []);
+        const { data, error } = await supabase
+          .rpc('get_company_shipments', { company_type: companyType });
+
+        if (error) throw error;
+        shipmentsData = data || [];
+      } else {
+        setCompanyInfo(null);
+        const { data: userRes } = await supabase.auth.getUser();
+        const currentUserId = userRes?.user?.id;
+
+        if (currentUserId) {
+          const { data: created, error: createdErr } = await supabase
+            .from('shipments')
+            .select('id, shipment_number, status, quantity, created_at')
+            .eq('created_by', currentUserId)
+            .order('created_at', { ascending: false });
+
+          if (createdErr) throw createdErr;
+
+          shipmentsData = (created || []).map((s: any) => ({
+            id: s.id,
+            shipment_number: s.shipment_number,
+            status: s.status,
+            quantity: s.quantity,
+            created_at: s.created_at,
+            waste_type_name: 'غير محدد',
+            generator_company_name: 'غير محدد',
+            transporter_company_name: 'غير محدد',
+            recycler_company_name: 'غير محدد',
+          }));
+        } else {
+          shipmentsData = [];
+        }
+      }
+
+      setShipments(shipmentsData);
 
       // Calculate stats
       const total = shipmentsData?.length || 0;

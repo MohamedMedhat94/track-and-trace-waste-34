@@ -32,9 +32,7 @@ const GeneratorDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.companyId) {
-      fetchMyShipments();
-    }
+    fetchMyShipments();
   }, [user?.companyId]);
 
   const fetchMyShipments = async () => {

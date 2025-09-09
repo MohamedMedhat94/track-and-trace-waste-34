@@ -33,9 +33,7 @@ const RecyclerDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.companyId) {
-      fetchReceivedShipments();
-    }
+    fetchReceivedShipments();
   }, [user?.companyId]);
 
   const fetchReceivedShipments = async () => {
