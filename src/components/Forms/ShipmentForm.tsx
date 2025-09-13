@@ -66,9 +66,7 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
   const fetchDrivers = async () => {
     try {
       const { data, error } = await supabase
-        .from('drivers')
-        .select('*')
-        .order('name');
+        .rpc('get_drivers_for_selection');
 
       if (error) throw error;
       setDrivers(data || []);

@@ -35,12 +35,8 @@ interface WasteType {
 interface Driver {
   id: string;
   name: string;
-  transport_company_id: string;
-  license_number: string;
-  vehicle_type: string;
-  vehicle_plate: string;
-  current_latitude?: number;
-  current_longitude?: number;
+  vehicle_type?: string;
+  vehicle_plate?: string;
 }
 
 const CreateShipment: React.FC = () => {
@@ -97,9 +93,7 @@ const CreateShipment: React.FC = () => {
 
       // Fetch drivers
       const { data: driversData, error: driversError } = await supabase
-        .from('drivers')
-        .select('*')
-        .order('name');
+        .rpc('get_drivers_for_selection');
 
       if (driversError) throw driversError;
 
@@ -267,7 +261,8 @@ const CreateShipment: React.FC = () => {
   };
 
   const getDriversByCompany = (companyId: string) => {
-    return drivers.filter(driver => driver.transport_company_id === companyId);
+    // Since we only have basic driver info, return all drivers
+    return drivers;
   };
 
   // Update available drivers when transporter company changes
@@ -453,10 +448,7 @@ const CreateShipment: React.FC = () => {
                               <div className="flex justify-between items-center w-full">
                                 <span>{driver.name}</span>
                                 <div className="text-xs text-muted-foreground mr-2">
-                                  {driver.license_number} | {driver.vehicle_type} | {driver.vehicle_plate}
-                                  {driver.current_latitude && driver.current_longitude && (
-                                    <span className="text-green-600 mr-2">📍 متواجد</span>
-                                  )}
+                                  {driver.vehicle_type || 'غير محدد'} {driver.vehicle_plate ? `| ${driver.vehicle_plate}` : ''}
                                 </div>
                               </div>
                             </SelectItem>

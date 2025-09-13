@@ -13,16 +13,16 @@ interface Driver {
   name: string;
   email: string;
   phone: string;
+  national_id: string;
   license_number: string;
   license_type: string;
   vehicle_type: string;
   vehicle_plate: string;
-  current_latitude: number;
-  current_longitude: number;
+  location_address: string;
+  transport_company_id: string;
+  created_at: string;
   is_online: boolean;
   last_ping: string;
-  created_at: string;
-  transport_company_id: string;
 }
 
 const TotalDriversDetails: React.FC = () => {
@@ -45,9 +45,7 @@ const TotalDriversDetails: React.FC = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('drivers')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .rpc('get_all_drivers');
 
       if (error) throw error;
       setDrivers(data || []);
@@ -290,14 +288,9 @@ const TotalDriversDetails: React.FC = () => {
                           <span className="font-medium">{driver.vehicle_plate}</span>
                         </div>
                       )}
-                      {driver.current_latitude && driver.current_longitude && (
-                        <div className="flex items-center space-x-2 space-x-reverse">
-                          <MapPin className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-xs">
-                            {driver.current_latitude.toFixed(4)}, {driver.current_longitude.toFixed(4)}
-                          </span>
-                        </div>
-                      )}
+                      <div className="text-xs text-muted-foreground">
+                        الهوية الوطنية: {driver.national_id || 'غير محدد'}
+                      </div>
                       <div className="flex items-center space-x-2 space-x-reverse">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         <span className="text-xs">آخر اتصال: {formatLastSeen(driver.last_ping)}</span>

@@ -62,9 +62,7 @@ const generatePDF = async () => {
       let driverData = null;
       if (shipment && shipment.driver_id) {
         const { data: driver } = await supabase
-          .from('drivers')
-          .select('id, name, phone, license_number')
-          .eq('id', shipment.driver_id)
+          .rpc('get_driver_for_pdf', { driver_id_param: shipment.driver_id })
           .single();
         driverData = driver;
       }

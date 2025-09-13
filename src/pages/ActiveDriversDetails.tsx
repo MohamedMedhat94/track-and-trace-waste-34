@@ -35,10 +35,7 @@ const ActiveDriversDetails: React.FC = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('drivers')
-        .select('*')
-        .eq('is_online', true)
-        .gte('last_ping', new Date(Date.now() - 10 * 60 * 1000).toISOString())
+        .rpc('get_active_drivers')
         .order('last_ping', { ascending: false });
 
       if (error) throw error;

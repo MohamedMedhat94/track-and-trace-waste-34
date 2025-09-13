@@ -9,11 +9,13 @@ import { MapPin, Navigation, Clock, Truck, Users } from 'lucide-react';
 interface DriverLocation {
   id: string;
   name: string;
-  email: string;
   current_latitude: number;
   current_longitude: number;
   last_location_update: string;
   is_online: boolean;
+  vehicle_type?: string;
+  vehicle_plate?: string;
+  last_ping?: string;
   assigned_vehicle_number?: string;
   speed?: number;
   heading?: number;
@@ -32,10 +34,7 @@ const RealTimeDriverMap: React.FC = () => {
   const fetchDrivers = async () => {
     try {
       const { data, error } = await supabase
-        .from('drivers')
-        .select('*')
-        .not('current_latitude', 'is', null)
-        .not('current_longitude', 'is', null);
+        .rpc('get_drivers_for_tracking');
 
       if (error) throw error;
       setDrivers(data || []);
@@ -187,7 +186,7 @@ const RealTimeDriverMap: React.FC = () => {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{driver.email}</p>
+                      <p className="text-sm text-muted-foreground">السائق: {driver.name}</p>
                       <div className="flex items-center space-x-4 space-x-reverse text-xs text-muted-foreground mt-1">
                         <span>📍 {driver.current_latitude.toFixed(6)}, {driver.current_longitude.toFixed(6)}</span>
                         <span>🕒 {getLocationAge(driver.last_location_update)}</span>
@@ -239,7 +238,7 @@ const RealTimeDriverMap: React.FC = () => {
                           </Badge>
                         )}
                       </div>
-                      <p className="text-sm text-muted-foreground">{driver.email}</p>
+                      <p className="text-sm text-muted-foreground">السائق: {driver.name}</p>
                       <p className="text-xs text-muted-foreground">
                         آخر اتصال: {getLocationAge(driver.last_location_update)}
                       </p>

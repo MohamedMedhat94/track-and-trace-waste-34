@@ -72,12 +72,11 @@ const AdminDashboard: React.FC = () => {
         .select('*', { count: 'exact', head: true })
         .eq('role', 'driver');
 
-      // Fetch active drivers count (online in last 10 minutes)
-      const { count: activeDriversCount } = await supabase
-        .from('drivers')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_online', true)
-        .gte('last_ping', new Date(Date.now() - 10 * 60 * 1000).toISOString());
+      // Fetch active drivers count using secure function
+      const { data: activeDriversData, error: activeDriversError } = await supabase
+        .rpc('get_active_drivers');
+      
+      const activeDriversCount = activeDriversData?.length || 0;
 
       // Fetch pending users count
       const { count: pendingUsersCount } = await supabase

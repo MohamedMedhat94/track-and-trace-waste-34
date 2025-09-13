@@ -1058,6 +1058,41 @@ export type Database = {
         }
         Returns: string
       }
+      get_active_drivers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          current_latitude: number
+          current_longitude: number
+          email: string
+          id: string
+          is_online: boolean
+          last_ping: string
+          name: string
+          phone: string
+          transport_company_id: string
+          vehicle_plate: string
+          vehicle_type: string
+        }[]
+      }
+      get_all_drivers: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          is_online: boolean
+          last_ping: string
+          license_number: string
+          license_type: string
+          location_address: string
+          name: string
+          national_id: string
+          phone: string
+          transport_company_id: string
+          vehicle_plate: string
+          vehicle_type: string
+        }[]
+      }
       get_companies_for_selection: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1107,6 +1142,15 @@ export type Database = {
           total_shipments: number
         }[]
       }
+      get_driver_for_pdf: {
+        Args: { driver_id_param: string }
+        Returns: {
+          id: string
+          license_number: string
+          name: string
+          phone: string
+        }[]
+      }
       get_driver_shipments: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -1120,6 +1164,29 @@ export type Database = {
           shipment_number: string
           status: string
           transporter_company_name: string
+        }[]
+      }
+      get_drivers_for_selection: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          name: string
+          vehicle_plate: string
+          vehicle_type: string
+        }[]
+      }
+      get_drivers_for_tracking: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          current_latitude: number
+          current_longitude: number
+          id: string
+          is_online: boolean
+          last_location_update: string
+          last_ping: string
+          name: string
+          vehicle_plate: string
+          vehicle_type: string
         }[]
       }
       get_user_credentials: {

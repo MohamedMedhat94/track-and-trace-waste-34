@@ -51,9 +51,7 @@ const ManagerMapView: React.FC = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('drivers')
-        .select('*')
-        .order('name');
+        .rpc('get_drivers_for_tracking');
 
       if (error) throw error;
       setDrivers(data || []);
