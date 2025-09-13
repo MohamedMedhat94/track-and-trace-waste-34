@@ -13,7 +13,8 @@ import {
   BarChart3,
   Bell,
   MapPin,
-  Upload
+  Upload,
+  Link
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ModalManager from '@/components/Modals/ModalManager';
@@ -468,6 +469,18 @@ const AdminDashboard: React.FC = () => {
                     <div>
                       <p className="font-semibold font-cairo">إحصائيات الشركات</p>
                       <p className="text-sm text-muted-foreground">عرض أداء جميع الشركات</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col items-start p-4 text-right"
+                    onClick={() => navigate('/user-company-assignment')}
+                  >
+                    <Link className="h-6 w-6 mb-2 text-primary" />
+                    <div>
+                      <p className="font-semibold font-cairo">ربط المستخدمين بالشركات</p>
+                      <p className="text-sm text-muted-foreground">إدارة ربط المستخدمين بالشركات</p>
                     </div>
                   </Button>
                   

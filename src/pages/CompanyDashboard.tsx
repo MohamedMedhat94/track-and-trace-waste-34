@@ -45,7 +45,6 @@ const CompanyDashboard = () => {
   }, [profile]);
 
 const fetchCompanyData = async () => {
-
     try {
       setLoading(true);
 
@@ -53,6 +52,7 @@ const fetchCompanyData = async () => {
       let shipmentsData: CompanyShipment[] = [];
 
       if (profile?.company_id) {
+        // User is linked to a company
         const { data: company, error: companyError } = await supabase
           .from('companies')
           .select('*')
@@ -73,14 +73,23 @@ const fetchCompanyData = async () => {
         if (error) throw error;
         shipmentsData = data || [];
       } else {
+        // User not linked to company - try to find company by email matching or role
         setCompanyInfo(null);
+        
+        // Get all shipments for this user (fallback)
         const { data: userRes } = await supabase.auth.getUser();
         const currentUserId = userRes?.user?.id;
 
         if (currentUserId) {
           const { data: created, error: createdErr } = await supabase
             .from('shipments')
-            .select('id, shipment_number, status, quantity, created_at')
+            .select(`
+              id, shipment_number, status, quantity, created_at,
+              generator_company:companies!generator_company_id(name),
+              transporter_company:companies!transporter_company_id(name), 
+              recycler_company:companies!recycler_company_id(name),
+              waste_type:waste_types(name)
+            `)
             .eq('created_by', currentUserId)
             .order('created_at', { ascending: false });
 
@@ -92,10 +101,10 @@ const fetchCompanyData = async () => {
             status: s.status,
             quantity: s.quantity,
             created_at: s.created_at,
-            waste_type_name: 'غير محدد',
-            generator_company_name: 'غير محدد',
-            transporter_company_name: 'غير محدد',
-            recycler_company_name: 'غير محدد',
+            waste_type_name: s.waste_type?.name || 'غير محدد',
+            generator_company_name: s.generator_company?.name || 'غير محدد',
+            transporter_company_name: s.transporter_company?.name || 'غير محدد',
+            recycler_company_name: s.recycler_company?.name || 'غير محدد',
           }));
         } else {
           shipmentsData = [];
@@ -189,12 +198,18 @@ const fetchCompanyData = async () => {
             {getCompanyTypeIcon(companyInfo?.type)}
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                لوحة تحكم {companyInfo?.name}
+                لوحة تحكم {companyInfo?.name || 'المستخدم'}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {companyInfo?.type === 'generator' && 'شركة مولدة للنفايات'}
-                {companyInfo?.type === 'transporter' && 'شركة نقل'}
-                {companyInfo?.type === 'recycler' && 'شركة تدوير'}
+                {companyInfo ? (
+                  <>
+                    {companyInfo?.type === 'generator' && 'شركة مولدة للنفايات'}
+                    {companyInfo?.type === 'transporter' && 'شركة نقل'}
+                    {companyInfo?.type === 'recycler' && 'شركة تدوير'}
+                  </>
+                ) : (
+                  <span className="text-orange-600">المستخدم غير مربوط بشركة - يرجى التواصل مع المدير</span>
+                )}
               </p>
             </div>
           </div>

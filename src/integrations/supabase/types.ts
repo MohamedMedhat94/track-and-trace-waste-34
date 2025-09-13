@@ -1035,6 +1035,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      assign_user_to_company: {
+        Args: { target_company_id: string; target_user_id: string }
+        Returns: undefined
+      }
       auto_approve_expired_shipments: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -1128,6 +1132,16 @@ export type Database = {
           waste_type_name: string
         }[]
       }
+      get_company_users: {
+        Args: { target_company_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          role: string
+          user_id: string
+        }[]
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1187,6 +1201,16 @@ export type Database = {
           name: string
           vehicle_plate: string
           vehicle_type: string
+        }[]
+      }
+      get_unassigned_users: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          role: string
+          user_id: string
         }[]
       }
       get_user_credentials: {

@@ -26,6 +26,7 @@ import PendingUsersDetails from "./pages/PendingUsersDetails";
 import TotalDriversDetails from "./pages/TotalDriversDetails";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import AdminCompaniesStats from "./pages/AdminCompaniesStats";
+import UserCompanyAssignment from "./pages/UserCompanyAssignment";
 import TestingDashboard from "./pages/TestingDashboard";
 
 const ShipmentDetails = React.lazy(() => import('./pages/ShipmentDetails'));
@@ -60,7 +61,8 @@ const App = () => (
             <Route path="/active-drivers" element={<ActiveDriversDetails />} />
         <Route path="/companies" element={<CompaniesDetails />} />
         <Route path="/companies-details" element={<CompaniesDetails />} />
-        <Route path="/testing-dashboard" element={<TestingDashboard />} />
+          <Route path="/user-company-assignment" element={<UserCompanyAssignment />} />
+          <Route path="/testing-dashboard" element={<TestingDashboard />} />
             <Route path="/active-shipments" element={<ActiveShipmentsDetails />} />
             <Route path="/total-shipments" element={<TotalShipmentsDetails />} />
             <Route path="/pending-users" element={<PendingUsersDetails />} />
