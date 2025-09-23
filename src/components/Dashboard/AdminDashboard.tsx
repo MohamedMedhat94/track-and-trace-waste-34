@@ -119,27 +119,36 @@ const AdminDashboard: React.FC = () => {
   };
 
   const setupRealtimeSubscriptions = () => {
-    // Subscribe to new shipments
+    console.log('Setting up real-time subscriptions for AdminDashboard');
+    
+    // Subscribe to all shipment changes (INSERT, UPDATE, DELETE)
     const shipmentsChannel = supabase
-      .channel('shipments-changes')
+      .channel('admin-shipments-changes')
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'shipments'
         },
         (payload) => {
-          console.log('New shipment:', payload.new);
+          console.log('Shipment change detected in AdminDashboard:', payload);
           playNotificationSound();
           setNotifications(prev => prev + 1);
           fetchStats();
           fetchRecentShipments();
           
-          toast({
-            title: "شحنة جديدة",
-            description: `تم إنشاء شحنة جديدة برقم: ${payload.new.shipment_number}`,
-          });
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "شحنة جديدة",
+              description: `تم إنشاء شحنة جديدة برقم: ${payload.new.shipment_number}`,
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            toast({
+              title: "تحديث شحنة",
+              description: `تم تحديث الشحنة رقم: ${payload.new.shipment_number}`,
+            });
+          }
         }
       )
       .on(
@@ -184,7 +193,10 @@ const AdminDashboard: React.FC = () => {
       )
       .subscribe();
 
+    console.log('Real-time subscriptions setup completed for AdminDashboard');
+
     return () => {
+      console.log('Cleaning up real-time subscriptions for AdminDashboard');
       supabase.removeChannel(shipmentsChannel);
     };
   };
@@ -481,6 +493,45 @@ const AdminDashboard: React.FC = () => {
                     <div>
                       <p className="font-semibold font-cairo">ربط المستخدمين بالشركات</p>
                       <p className="text-sm text-muted-foreground">إدارة ربط المستخدمين بالشركات</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col items-start p-4 text-right"
+                    onClick={async () => {
+                      const action = async () => {
+                        // Quick test shipment creation
+                        const timestamp = Date.now();
+                        const testShipment = {
+                          shipment_number: `TEST${timestamp}`,
+                          generator_company_id: '651612ef-73ca-48b8-92f4-789375d92ae6',
+                          transporter_company_id: '87658f87-2de3-4cd0-a3bb-e4091c7ff8a6', 
+                          recycler_company_id: 'c1a929b0-df88-4e6a-943e-0c0940ba6c67',
+                          driver_id: '8e436ec3-979b-4f7a-903e-3a56e3d932bb',
+                          waste_type_id: '76471b3d-2539-4486-80cc-2372ff8194ef',
+                          quantity: 50,
+                          pickup_location: 'موقع اختبار الاستلام',
+                          delivery_location: 'موقع اختبار التسليم',
+                          status: 'pending',
+                          driver_entry_type: 'registered'
+                        };
+                        
+                        const { error } = await supabase
+                          .from('shipments')
+                          .insert([testShipment]);
+                          
+                        if (error) throw error;
+                        
+                        console.log('Test shipment created:', testShipment);
+                      };
+                      await validateAndExecute('create_test_shipment', action, `تم إنشاء شحنة اختبار بنجاح - ستظهر في جميع الصفحات فوراً`);
+                    }}
+                  >
+                    <FileText className="h-6 w-6 mb-2 text-success" />
+                    <div>
+                      <p className="font-semibold font-cairo">إنشاء شحنة اختبار</p>
+                      <p className="text-sm text-muted-foreground">اختبار التحديثات الفورية</p>
                     </div>
                   </Button>
                   

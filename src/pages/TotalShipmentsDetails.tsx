@@ -33,11 +33,44 @@ const TotalShipmentsDetails: React.FC = () => {
 
   useEffect(() => {
     fetchAllShipments();
+    setupRealtimeSubscriptions();
   }, []);
 
   useEffect(() => {
     filterShipments();
   }, [shipments, searchTerm, statusFilter]);
+
+  const setupRealtimeSubscriptions = () => {
+    console.log('Setting up real-time subscriptions for TotalShipmentsDetails');
+    
+    const shipmentsChannel = supabase
+      .channel('total-shipments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments'
+        },
+        (payload) => {
+          console.log('Shipment change detected in TotalShipmentsDetails:', payload);
+          fetchAllShipments(); // Refresh the shipments list
+          
+          if (payload.eventType === 'INSERT') {
+            toast({
+              title: "شحنة جديدة",
+              description: `تم إنشاء شحنة جديدة برقم: ${payload.new.shipment_number}`,
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscriptions for TotalShipmentsDetails');
+      supabase.removeChannel(shipmentsChannel);
+    };
+  };
 
   const fetchAllShipments = async () => {
     try {
