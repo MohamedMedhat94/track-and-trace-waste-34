@@ -123,7 +123,7 @@ const AdminDashboard: React.FC = () => {
     
     // Subscribe to all shipment changes (INSERT, UPDATE, DELETE)
     const shipmentsChannel = supabase
-      .channel('admin-shipments-changes')
+      .channel('admin-dashboard-all-changes')
       .on(
         'postgres_changes',
         {
@@ -132,11 +132,13 @@ const AdminDashboard: React.FC = () => {
           table: 'shipments'
         },
         (payload) => {
-          console.log('Shipment change detected in AdminDashboard:', payload);
+          console.log('Admin - Shipment change detected:', payload);
           playNotificationSound();
           setNotifications(prev => prev + 1);
-          fetchStats();
-          fetchRecentShipments();
+          setTimeout(() => {
+            fetchStats();
+            fetchRecentShipments();
+          }, 100);
           
           if (payload.eventType === 'INSERT') {
             toast({

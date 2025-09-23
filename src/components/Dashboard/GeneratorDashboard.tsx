@@ -37,8 +37,11 @@ const GeneratorDashboard: React.FC = () => {
 
   // Real-time updates for shipments
   useEffect(() => {
+    if (!user?.companyId) return;
+
+    console.log('Setting up Generator Dashboard real-time subscription');
     const channel = supabase
-      .channel('generator-shipments-changes')
+      .channel(`generator-shipments-${user.companyId}`)
       .on(
         'postgres_changes',
         {
@@ -47,11 +50,27 @@ const GeneratorDashboard: React.FC = () => {
           table: 'shipments'
         },
         (payload) => {
-          console.log('Shipment change detected:', payload);
-          fetchMyShipments(); // Refresh shipments on any change
+          console.log('Generator - Shipment change detected:', payload);
+          setTimeout(() => fetchMyShipments(), 100); // Small delay to ensure data consistency
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipment_notifications'
+        },
+        (payload) => {
+          console.log('Generator - Notification change detected:', payload);
+          if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
+            setTimeout(() => fetchMyShipments(), 100);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Generator subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

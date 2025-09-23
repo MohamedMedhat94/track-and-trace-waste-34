@@ -46,8 +46,11 @@ const CompanyDashboard = () => {
 
   // Real-time updates for shipments
   useEffect(() => {
+    if (!profile?.id) return;
+
+    console.log('Setting up Company Dashboard real-time subscription');
     const channel = supabase
-      .channel('company-shipments-changes')
+      .channel(`company-dashboard-${profile.id}`)
       .on(
         'postgres_changes',
         {
@@ -56,16 +59,30 @@ const CompanyDashboard = () => {
           table: 'shipments'
         },
         (payload) => {
-          console.log('Shipment change detected:', payload);
-          fetchCompanyData(); // Refresh company data on any shipment change
+          console.log('Company - Shipment change detected:', payload);
+          setTimeout(() => fetchCompanyData(), 100); // Small delay to ensure data consistency
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipment_notifications'
+        },
+        (payload) => {
+          console.log('Company - Notification change detected:', payload);
+          setTimeout(() => fetchCompanyData(), 100);
+        }
+      )
+      .subscribe((status) => {
+        console.log('Company Dashboard subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [profile]);
+  }, [profile?.id]);
 
 const fetchCompanyData = async () => {
     try {

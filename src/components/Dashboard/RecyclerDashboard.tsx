@@ -38,8 +38,11 @@ const RecyclerDashboard: React.FC = () => {
 
   // Real-time updates for shipments
   useEffect(() => {
+    if (!user?.companyId) return;
+
+    console.log('Setting up Recycler Dashboard real-time subscription');
     const channel = supabase
-      .channel('recycler-shipments-changes')
+      .channel(`recycler-shipments-${user.companyId}`)
       .on(
         'postgres_changes',
         {
@@ -48,11 +51,27 @@ const RecyclerDashboard: React.FC = () => {
           table: 'shipments'
         },
         (payload) => {
-          console.log('Shipment change detected:', payload);
-          fetchReceivedShipments(); // Refresh shipments on any change
+          console.log('Recycler - Shipment change detected:', payload);
+          setTimeout(() => fetchReceivedShipments(), 100); // Small delay to ensure data consistency
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipment_notifications'
+        },
+        (payload) => {
+          console.log('Recycler - Notification change detected:', payload);
+          if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
+            setTimeout(() => fetchReceivedShipments(), 100);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Recycler subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

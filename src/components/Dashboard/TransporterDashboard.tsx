@@ -49,8 +49,11 @@ const TransporterDashboard: React.FC = () => {
 
   // Real-time updates for shipments
   useEffect(() => {
+    if (!user?.companyId) return;
+
+    console.log('Setting up Transporter Dashboard real-time subscription');
     const channel = supabase
-      .channel('transporter-shipments-changes')
+      .channel(`transporter-shipments-${user.companyId}`)
       .on(
         'postgres_changes',
         {
@@ -59,11 +62,27 @@ const TransporterDashboard: React.FC = () => {
           table: 'shipments'
         },
         (payload) => {
-          console.log('Shipment change detected:', payload);
-          fetchTransporterShipments(); // Refresh shipments on any change
+          console.log('Transporter - Shipment change detected:', payload);
+          setTimeout(() => fetchTransporterShipments(), 100); // Small delay to ensure data consistency
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipment_notifications'
+        },
+        (payload) => {
+          console.log('Transporter - Notification change detected:', payload);
+          if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
+            setTimeout(() => fetchTransporterShipments(), 100);
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Transporter subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
