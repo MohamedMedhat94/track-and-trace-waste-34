@@ -44,6 +44,29 @@ const CompanyDashboard = () => {
     fetchCompanyData();
   }, [profile]);
 
+  // Real-time updates for shipments
+  useEffect(() => {
+    const channel = supabase
+      .channel('company-shipments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments'
+        },
+        (payload) => {
+          console.log('Shipment change detected:', payload);
+          fetchCompanyData(); // Refresh company data on any shipment change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile]);
+
 const fetchCompanyData = async () => {
     try {
       setLoading(true);

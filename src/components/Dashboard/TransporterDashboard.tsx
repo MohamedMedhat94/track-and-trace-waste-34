@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { 
   PlusCircle,
   Truck, 
@@ -23,13 +25,14 @@ import CompanyRegistrationForm from '@/components/Forms/CompanyRegistrationForm'
 const TransporterDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const stats = {
+  const [stats, setStats] = useState({
     totalShipments: 67,
     activeShipments: 12,
     myDrivers: 8,
     partneredCompanies: 15
-  };
+  });
 
   const [showShipmentForm, setShowShipmentForm] = useState(false);
   const [showDriverForm, setShowDriverForm] = useState(false);
@@ -37,6 +40,67 @@ const TransporterDashboard: React.FC = () => {
   const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [editingShipment, setEditingShipment] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [myShipments, setMyShipments] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTransporterShipments();
+  }, [user?.companyId]);
+
+  // Real-time updates for shipments
+  useEffect(() => {
+    const channel = supabase
+      .channel('transporter-shipments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments'
+        },
+        (payload) => {
+          console.log('Shipment change detected:', payload);
+          fetchTransporterShipments(); // Refresh shipments on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.companyId]);
+
+  const fetchTransporterShipments = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .rpc('get_company_shipments', { company_type: 'transporter' });
+
+      if (error) throw error;
+
+      setMyShipments(data || []);
+      
+      // Update stats based on real data
+      const total = data?.length || 0;
+      const active = data?.filter((s: any) => ['pending', 'in_transit', 'processing'].includes(s.status)).length || 0;
+      
+      setStats(prev => ({
+        ...prev,
+        totalShipments: total,
+        activeShipments: active
+      }));
+
+    } catch (error: any) {
+      console.error('خطأ في جلب الشحنات:', error);
+      toast({
+        title: "خطأ في جلب البيانات",
+        description: error.message || "حدث خطأ غير متوقع",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const quickActions = [
     {
@@ -71,40 +135,11 @@ const TransporterDashboard: React.FC = () => {
     },
   ];
 
-  const myShipments = [
-    {
-      id: 'SH001',
-      generator: 'ABC Manufacturing',
-      recycler: 'EcoRecycle Industries',
-      driver: 'John Driver',
-      wasteType: 'Electronic Waste',
-      status: 'in_transit',
-      createdAt: '2024-01-15',
-    },
-    {
-      id: 'SH003',
-      generator: 'Tech Corp',
-      recycler: 'CleanCycle Solutions',
-      driver: 'Mike Wilson',
-      wasteType: 'Plastic Waste',
-      status: 'delivered',
-      createdAt: '2024-01-14',
-    },
-    {
-      id: 'SH007',
-      generator: 'Green Factory',
-      recycler: 'EcoRecycle Industries',
-      driver: 'Sarah Johnson',
-      wasteType: 'Metal Scrap',
-      status: 'completed',
-      createdAt: '2024-01-13',
-    },
-  ];
-
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'in_transit': return 'bg-warning text-warning-foreground';
-      case 'delivered': return 'bg-primary text-primary-foreground';
+      case 'pending': return 'bg-warning text-warning-foreground';
+      case 'in_transit': return 'bg-primary text-primary-foreground';
+      case 'delivered': return 'bg-accent text-accent-foreground';
       case 'completed': return 'bg-success text-success-foreground';
       default: return 'bg-muted text-muted-foreground';
     }
@@ -112,6 +147,7 @@ const TransporterDashboard: React.FC = () => {
 
   const getStatusText = (status: string) => {
     switch (status) {
+      case 'pending': return 'في الانتظار';
       case 'in_transit': return 'قيد النقل';
       case 'delivered': return 'تم التسليم';
       case 'completed': return 'مكتمل';
@@ -242,68 +278,78 @@ const TransporterDashboard: React.FC = () => {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {myShipments.map((shipment) => (
-              <div
-                key={shipment.id}
-                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <span className="font-semibold text-lg">{shipment.id}</span>
-                    <Badge className={getStatusColor(shipment.status)}>
-                      {getStatusText(shipment.status)}
-                    </Badge>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <div className="text-muted-foreground">جاري تحميل الشحنات...</div>
+            </div>
+          ) : myShipments.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-muted-foreground">لا توجد شحنات حتى الآن</div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {myShipments.map((shipment) => (
+                <div
+                  key={shipment.id}
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <span className="font-semibold text-lg">{shipment.shipment_number}</span>
+                      <Badge className={getStatusColor(shipment.status)}>
+                        {getStatusText(shipment.status)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">المولد:</span>
+                        <p className="font-medium">{shipment.generator_company_name || 'غير محدد'}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">المدور:</span>
+                        <p className="font-medium">{shipment.recycler_company_name || 'غير محدد'}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">نوع النفايات:</span>
+                        <p className="font-medium">{shipment.waste_type_name || 'غير محدد'}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">الكمية:</span>
+                        <p className="font-medium">{shipment.quantity} كجم</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-muted-foreground">
+                        تاريخ الإنشاء: {new Date(shipment.created_at).toLocaleDateString('ar-EG')}
+                      </span>
+                    </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">المولد:</span>
-                      <p className="font-medium">{shipment.generator}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">المدور:</span>
-                      <p className="font-medium">{shipment.recycler}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">السائق:</span>
-                      <p className="font-medium">{shipment.driver}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">نوع النفايات:</span>
-                      <p className="font-medium">{shipment.wasteType}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-muted-foreground">
-                      تاريخ الإنشاء: {shipment.createdAt}
-                    </span>
+                  <div className="flex space-x-2 ml-4">
+                    <Button variant="ghost" size="sm" title="عرض الموقع">
+                      <MapPin className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setEditingShipment(shipment);
+                        setShowShipmentForm(true);
+                      }}
+                      title="تعديل الشحنة"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" title="عرض التفاصيل">
+                      <Eye className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-                
-                <div className="flex space-x-2 ml-4">
-                  <Button variant="ghost" size="sm" title="عرض الموقع">
-                    <MapPin className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => {
-                      setEditingShipment(shipment);
-                      setShowShipmentForm(true);
-                    }}
-                    title="تعديل الشحنة"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" title="عرض التفاصيل">
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

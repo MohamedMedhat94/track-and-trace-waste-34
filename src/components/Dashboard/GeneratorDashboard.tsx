@@ -35,6 +35,29 @@ const GeneratorDashboard: React.FC = () => {
     fetchMyShipments();
   }, [user?.companyId]);
 
+  // Real-time updates for shipments
+  useEffect(() => {
+    const channel = supabase
+      .channel('generator-shipments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments'
+        },
+        (payload) => {
+          console.log('Shipment change detected:', payload);
+          fetchMyShipments(); // Refresh shipments on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.companyId]);
+
   const fetchMyShipments = async () => {
     try {
       setIsLoading(true);

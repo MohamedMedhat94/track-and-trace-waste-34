@@ -36,6 +36,29 @@ const RecyclerDashboard: React.FC = () => {
     fetchReceivedShipments();
   }, [user?.companyId]);
 
+  // Real-time updates for shipments
+  useEffect(() => {
+    const channel = supabase
+      .channel('recycler-shipments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments'
+        },
+        (payload) => {
+          console.log('Shipment change detected:', payload);
+          fetchReceivedShipments(); // Refresh shipments on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.companyId]);
+
   const fetchReceivedShipments = async () => {
     try {
       setIsLoading(true);

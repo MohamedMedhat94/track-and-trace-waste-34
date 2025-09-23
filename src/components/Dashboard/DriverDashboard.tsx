@@ -42,6 +42,29 @@ const DriverDashboard: React.FC = () => {
     fetchDriverShipments();
   }, [user]);
 
+  // Real-time updates for shipments
+  useEffect(() => {
+    const channel = supabase
+      .channel('driver-shipments-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'shipments'
+        },
+        (payload) => {
+          console.log('Shipment change detected:', payload);
+          fetchDriverShipments(); // Refresh shipments on any change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const fetchDriverShipments = async () => {
     try {
       setIsLoading(true);
