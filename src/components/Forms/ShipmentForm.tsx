@@ -59,37 +59,61 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'companies'
         },
         (payload) => {
-          console.log('Companies change detected:', payload);
-          fetchCompanies();
+          console.log('New company added:', payload);
+          setTimeout(() => fetchCompanies(), 100);
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'companies'
+        },
+        (payload) => {
+          console.log('Company updated:', payload);
+          setTimeout(() => fetchCompanies(), 100);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'drivers'
         },
         (payload) => {
-          console.log('Drivers change detected:', payload);
-          fetchDrivers();
+          console.log('New driver added:', payload);
+          setTimeout(() => fetchDrivers(), 100);
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'drivers'
+        },
+        (payload) => {
+          console.log('Driver updated:', payload);
+          setTimeout(() => fetchDrivers(), 100);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'waste_types'
         },
         (payload) => {
-          console.log('Waste types change detected:', payload);
-          fetchWasteTypes();
+          console.log('New waste type added:', payload);
+          setTimeout(() => fetchWasteTypes(), 100);
         }
       )
       .subscribe((status) => {

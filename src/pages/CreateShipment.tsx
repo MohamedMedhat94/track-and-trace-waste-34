@@ -83,37 +83,61 @@ const CreateShipment: React.FC = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'companies'
         },
         (payload) => {
-          console.log('Companies change detected:', payload);
-          fetchData();
+          console.log('New company added:', payload);
+          setTimeout(() => fetchData(), 100);
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'companies'
+        },
+        (payload) => {
+          console.log('Company updated:', payload);
+          setTimeout(() => fetchData(), 100);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'drivers'
         },
         (payload) => {
-          console.log('Drivers change detected:', payload);
-          fetchData();
+          console.log('New driver added:', payload);
+          setTimeout(() => fetchData(), 100);
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'drivers'
+        },
+        (payload) => {
+          console.log('Driver updated:', payload);
+          setTimeout(() => fetchData(), 100);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'waste_types'
         },
         (payload) => {
-          console.log('Waste types change detected:', payload);
-          fetchData();
+          console.log('New waste type added:', payload);
+          setTimeout(() => fetchData(), 100);
         }
       )
       .subscribe((status) => {
