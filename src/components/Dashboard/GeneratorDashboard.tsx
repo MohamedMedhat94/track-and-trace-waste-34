@@ -39,7 +39,7 @@ const GeneratorDashboard: React.FC = () => {
   useEffect(() => {
     if (!user?.companyId) return;
 
-    console.log('Setting up Generator Dashboard real-time subscription');
+    console.log('Setting up Generator Dashboard real-time subscription for company:', user.companyId);
     const channel = supabase
       .channel(`generator-shipments-${user.companyId}`)
       .on(
@@ -47,11 +47,12 @@ const GeneratorDashboard: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'shipments'
+          table: 'shipments',
+          filter: `generator_company_id=eq.${user.companyId}`
         },
         (payload) => {
           console.log('Generator - Shipment change detected:', payload);
-          setTimeout(() => fetchMyShipments(), 100); // Small delay to ensure data consistency
+          fetchMyShipments(); // Refresh immediately
         }
       )
       .on(

@@ -40,7 +40,7 @@ const RecyclerDashboard: React.FC = () => {
   useEffect(() => {
     if (!user?.companyId) return;
 
-    console.log('Setting up Recycler Dashboard real-time subscription');
+    console.log('Setting up Recycler Dashboard real-time subscription for company:', user.companyId);
     const channel = supabase
       .channel(`recycler-shipments-${user.companyId}`)
       .on(
@@ -48,11 +48,12 @@ const RecyclerDashboard: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'shipments'
+          table: 'shipments',
+          filter: `recycler_company_id=eq.${user.companyId}`
         },
         (payload) => {
           console.log('Recycler - Shipment change detected:', payload);
-          setTimeout(() => fetchReceivedShipments(), 100); // Small delay to ensure data consistency
+          fetchReceivedShipments(); // Refresh immediately
         }
       )
       .on(

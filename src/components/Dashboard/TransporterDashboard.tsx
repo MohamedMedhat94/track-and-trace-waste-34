@@ -51,7 +51,7 @@ const TransporterDashboard: React.FC = () => {
   useEffect(() => {
     if (!user?.companyId) return;
 
-    console.log('Setting up Transporter Dashboard real-time subscription');
+    console.log('Setting up Transporter Dashboard real-time subscription for company:', user.companyId);
     const channel = supabase
       .channel(`transporter-shipments-${user.companyId}`)
       .on(
@@ -59,11 +59,12 @@ const TransporterDashboard: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'shipments'
+          table: 'shipments',
+          filter: `transporter_company_id=eq.${user.companyId}`
         },
         (payload) => {
           console.log('Transporter - Shipment change detected:', payload);
-          setTimeout(() => fetchTransporterShipments(), 100); // Small delay to ensure data consistency
+          fetchTransporterShipments(); // Refresh immediately
         }
       )
       .on(
