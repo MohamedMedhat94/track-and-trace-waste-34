@@ -51,6 +51,56 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
     }
   }, []);
 
+  // Real-time subscriptions for companies, drivers, and waste types
+  useEffect(() => {
+    console.log('Setting up ShipmentForm real-time subscriptions');
+    const channel = supabase
+      .channel('shipment-form-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'companies'
+        },
+        (payload) => {
+          console.log('Companies change detected:', payload);
+          fetchCompanies();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drivers'
+        },
+        (payload) => {
+          console.log('Drivers change detected:', payload);
+          fetchDrivers();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'waste_types'
+        },
+        (payload) => {
+          console.log('Waste types change detected:', payload);
+          fetchWasteTypes();
+        }
+      )
+      .subscribe((status) => {
+        console.log('ShipmentForm subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchCompanies = async () => {
     try {
       const { data, error } = await supabase

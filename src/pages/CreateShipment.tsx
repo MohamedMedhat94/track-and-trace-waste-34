@@ -75,6 +75,56 @@ const CreateShipment: React.FC = () => {
     fetchData();
   }, []);
 
+  // Real-time subscriptions for companies, drivers, and waste types
+  useEffect(() => {
+    console.log('Setting up CreateShipment real-time subscriptions');
+    const channel = supabase
+      .channel('create-shipment-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'companies'
+        },
+        (payload) => {
+          console.log('Companies change detected:', payload);
+          fetchData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'drivers'
+        },
+        (payload) => {
+          console.log('Drivers change detected:', payload);
+          fetchData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'waste_types'
+        },
+        (payload) => {
+          console.log('Waste types change detected:', payload);
+          fetchData();
+        }
+      )
+      .subscribe((status) => {
+        console.log('CreateShipment subscription status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const fetchData = async () => {
     try {
       // Fetch companies
