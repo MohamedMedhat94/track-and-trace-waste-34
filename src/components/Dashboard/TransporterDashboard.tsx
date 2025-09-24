@@ -59,12 +59,15 @@ const TransporterDashboard: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'shipments',
-          filter: `transporter_company_id=eq.${user.companyId}`
+          table: 'shipments'
         },
         (payload) => {
           console.log('Transporter - Shipment change detected:', payload);
-          fetchTransporterShipments(); // Refresh immediately
+          // Check if this shipment involves this company as transporter
+          const shipmentData = payload.new || payload.old;
+          if (shipmentData && (shipmentData as any).transporter_company_id === user.companyId) {
+            fetchTransporterShipments(); // Refresh immediately
+          }
         }
       )
       .on(
@@ -77,7 +80,7 @@ const TransporterDashboard: React.FC = () => {
         (payload) => {
           console.log('Transporter - Notification change detected:', payload);
           if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
-            setTimeout(() => fetchTransporterShipments(), 100);
+            fetchTransporterShipments(); // Remove setTimeout for immediate update
           }
         }
       )

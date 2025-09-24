@@ -48,12 +48,15 @@ const RecyclerDashboard: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'shipments',
-          filter: `recycler_company_id=eq.${user.companyId}`
+          table: 'shipments'
         },
         (payload) => {
           console.log('Recycler - Shipment change detected:', payload);
-          fetchReceivedShipments(); // Refresh immediately
+          // Check if this shipment involves this company as recycler
+          const shipmentData = payload.new || payload.old;
+          if (shipmentData && (shipmentData as any).recycler_company_id === user.companyId) {
+            fetchReceivedShipments(); // Refresh immediately
+          }
         }
       )
       .on(
@@ -66,7 +69,7 @@ const RecyclerDashboard: React.FC = () => {
         (payload) => {
           console.log('Recycler - Notification change detected:', payload);
           if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
-            setTimeout(() => fetchReceivedShipments(), 100);
+            fetchReceivedShipments(); // Remove setTimeout for immediate update
           }
         }
       )

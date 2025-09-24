@@ -59,61 +59,37 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',  
           schema: 'public',
           table: 'companies'
         },
         (payload) => {
-          console.log('New company added:', payload);
-          setTimeout(() => fetchCompanies(), 100);
+          console.log('Company change detected:', payload);
+          fetchCompanies(); // Remove setTimeout for immediate update
         }
       )
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'companies'
-        },
-        (payload) => {
-          console.log('Company updated:', payload);
-          setTimeout(() => fetchCompanies(), 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'drivers'
         },
         (payload) => {
-          console.log('New driver added:', payload);
-          setTimeout(() => fetchDrivers(), 100);
+          console.log('Driver change detected:', payload);
+          fetchDrivers(); // Remove setTimeout for immediate update
         }
       )
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'drivers'
-        },
-        (payload) => {
-          console.log('Driver updated:', payload);
-          setTimeout(() => fetchDrivers(), 100);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'waste_types'
         },
         (payload) => {
-          console.log('New waste type added:', payload);
-          setTimeout(() => fetchWasteTypes(), 100);
+          console.log('Waste type change detected:', payload);
+          fetchWasteTypes(); // Remove setTimeout for immediate update
         }
       )
       .subscribe((status) => {

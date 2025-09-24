@@ -47,12 +47,15 @@ const GeneratorDashboard: React.FC = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'shipments',
-          filter: `generator_company_id=eq.${user.companyId}`
+          table: 'shipments'
         },
         (payload) => {
           console.log('Generator - Shipment change detected:', payload);
-          fetchMyShipments(); // Refresh immediately
+          // Check if this shipment involves this company as generator
+          const shipmentData = payload.new || payload.old;
+          if (shipmentData && (shipmentData as any).generator_company_id === user.companyId) {
+            fetchMyShipments(); // Refresh immediately
+          }
         }
       )
       .on(
@@ -65,7 +68,7 @@ const GeneratorDashboard: React.FC = () => {
         (payload) => {
           console.log('Generator - Notification change detected:', payload);
           if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
-            setTimeout(() => fetchMyShipments(), 100);
+            fetchMyShipments(); // Remove setTimeout for immediate update
           }
         }
       )
