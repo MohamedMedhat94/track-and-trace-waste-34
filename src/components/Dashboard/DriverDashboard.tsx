@@ -42,8 +42,11 @@ const DriverDashboard: React.FC = () => {
     fetchDriverShipments();
   }, [user]);
 
-  // Real-time updates for shipments
+  // Real-time updates for shipments assigned to this driver
   useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('Setting up Driver Dashboard real-time subscription for user:', user.id);
     const channel = supabase
       .channel('driver-shipments-changes')
       .on(
@@ -54,16 +57,19 @@ const DriverDashboard: React.FC = () => {
           table: 'shipments'
         },
         (payload) => {
-          console.log('Shipment change detected:', payload);
-          fetchDriverShipments(); // Refresh shipments on any change
+          console.log('Driver - Shipment change detected:', payload);
+          // Refresh immediately for any shipment change (driver assignments are determined by RPC)
+          fetchDriverShipments();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Driver subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
 
   const fetchDriverShipments = async () => {
     try {

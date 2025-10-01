@@ -135,10 +135,9 @@ const AdminDashboard: React.FC = () => {
           console.log('Admin - Shipment change detected:', payload);
           playNotificationSound();
           setNotifications(prev => prev + 1);
-          setTimeout(() => {
-            fetchStats();
-            fetchRecentShipments();
-          }, 100);
+          // Refresh immediately without setTimeout
+          fetchStats();
+          fetchRecentShipments();
           
           if (payload.eventType === 'INSERT') {
             toast({

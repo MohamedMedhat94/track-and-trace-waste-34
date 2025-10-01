@@ -63,11 +63,8 @@ const TransporterDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Transporter - Shipment change detected:', payload);
-          // Check if this shipment involves this company as transporter
-          const shipmentData = payload.new || payload.old;
-          if (shipmentData && (shipmentData as any).transporter_company_id === user.companyId) {
-            fetchTransporterShipments(); // Refresh immediately
-          }
+          // Always refresh - the RPC function will filter based on company_id
+          fetchTransporterShipments();
         }
       )
       .on(
@@ -79,9 +76,7 @@ const TransporterDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Transporter - Notification change detected:', payload);
-          if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
-            fetchTransporterShipments(); // Remove setTimeout for immediate update
-          }
+          fetchTransporterShipments();
         }
       )
       .subscribe((status) => {

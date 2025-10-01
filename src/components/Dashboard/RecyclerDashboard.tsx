@@ -52,11 +52,8 @@ const RecyclerDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Recycler - Shipment change detected:', payload);
-          // Check if this shipment involves this company as recycler
-          const shipmentData = payload.new || payload.old;
-          if (shipmentData && (shipmentData as any).recycler_company_id === user.companyId) {
-            fetchReceivedShipments(); // Refresh immediately
-          }
+          // Always refresh - the RPC function will filter based on company_id
+          fetchReceivedShipments();
         }
       )
       .on(
@@ -68,9 +65,7 @@ const RecyclerDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Recycler - Notification change detected:', payload);
-          if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
-            fetchReceivedShipments(); // Remove setTimeout for immediate update
-          }
+          fetchReceivedShipments();
         }
       )
       .subscribe((status) => {

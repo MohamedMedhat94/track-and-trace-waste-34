@@ -51,11 +51,8 @@ const GeneratorDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Generator - Shipment change detected:', payload);
-          // Check if this shipment involves this company as generator
-          const shipmentData = payload.new || payload.old;
-          if (shipmentData && (shipmentData as any).generator_company_id === user.companyId) {
-            fetchMyShipments(); // Refresh immediately
-          }
+          // Always refresh - the RPC function will filter based on company_id
+          fetchMyShipments();
         }
       )
       .on(
@@ -67,9 +64,7 @@ const GeneratorDashboard: React.FC = () => {
         },
         (payload) => {
           console.log('Generator - Notification change detected:', payload);
-          if (payload.new && (payload.new as any).recipient_company_id === user.companyId) {
-            fetchMyShipments(); // Remove setTimeout for immediate update
-          }
+          fetchMyShipments();
         }
       )
       .subscribe((status) => {
