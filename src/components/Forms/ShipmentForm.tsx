@@ -54,50 +54,95 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
   // Real-time subscriptions for companies, drivers, and waste types
   useEffect(() => {
     console.log('Setting up ShipmentForm real-time subscriptions');
-    const channel = supabase
-      .channel('shipment-form-updates')
+    
+    const companiesChannel = supabase
+      .channel('form-companies-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',  
+          event: 'INSERT',
           schema: 'public',
           table: 'companies'
         },
-        (payload) => {
-          console.log('Company change detected:', payload);
-          fetchCompanies(); // Remove setTimeout for immediate update
+        async (payload) => {
+          console.log('New company added:', payload.new);
+          setCompanies(prev => [...prev, payload.new as any]);
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'companies'
+        },
+        async (payload) => {
+          console.log('Company updated:', payload.new);
+          setCompanies(prev => prev.map(c => c.id === payload.new.id ? payload.new as any : c));
+        }
+      )
+      .subscribe();
+
+    const driversChannel = supabase
+      .channel('form-drivers-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'drivers'
         },
-        (payload) => {
-          console.log('Driver change detected:', payload);
-          fetchDrivers(); // Remove setTimeout for immediate update
+        async (payload) => {
+          console.log('New driver added:', payload.new);
+          setDrivers(prev => [...prev, payload.new as any]);
         }
       )
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'drivers'
+        },
+        async (payload) => {
+          console.log('Driver updated:', payload.new);
+          setDrivers(prev => prev.map(d => d.id === payload.new.id ? payload.new as any : d));
+        }
+      )
+      .subscribe();
+
+    const wasteTypesChannel = supabase
+      .channel('form-waste-types-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
           schema: 'public',
           table: 'waste_types'
         },
-        (payload) => {
-          console.log('Waste type change detected:', payload);
-          fetchWasteTypes(); // Remove setTimeout for immediate update
+        async (payload) => {
+          console.log('New waste type added:', payload.new);
+          setWasteTypes(prev => [...prev, payload.new as any]);
         }
       )
-      .subscribe((status) => {
-        console.log('ShipmentForm subscription status:', status);
-      });
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'waste_types'
+        },
+        async (payload) => {
+          console.log('Waste type updated:', payload.new);
+          setWasteTypes(prev => prev.map(w => w.id === payload.new.id ? payload.new as any : w));
+        }
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(companiesChannel);
+      supabase.removeChannel(driversChannel);
+      supabase.removeChannel(wasteTypesChannel);
     };
   }, []);
 
