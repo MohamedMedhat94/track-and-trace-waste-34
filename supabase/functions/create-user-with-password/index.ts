@@ -95,14 +95,15 @@ serve(async (req) => {
       console.log('User created successfully:', userId)
     }
 
-    // Ensure profile exists and update basic info; keep inactive until admin approval
+    // Ensure profile exists and update basic info
+    // Companies and drivers created by admin should be active immediately
     const profilePayload: any = {
       user_id: userId!,
       email: email,
       full_name: userData.name || userData.contact_person,
       phone: userData.phone,
       role: userType === 'company' ? userData.type : 'driver',
-      is_active: false,
+      is_active: true, // Set to active immediately for admin-created accounts
     };
 
     // If driver and transport company provided, link it
@@ -120,13 +121,13 @@ serve(async (req) => {
     }
 
     if (userType === 'company') {
-      // Create company record (pending activation)
+      // Create company record - active immediately when created by admin
       const { data: company, error: companyError } = await supabaseAdmin
         .from('companies')
         .insert({
           ...userData,
-          is_active: false,
-          status: 'pending'
+          is_active: true,  // Set to active immediately for admin-created companies
+          status: 'active'  // Set status to active
         })
         .select();
 
