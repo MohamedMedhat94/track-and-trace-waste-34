@@ -15,12 +15,14 @@ import {
   Eye,
   Edit,
   MapPin,
-  X
+  X,
+  Printer
 } from 'lucide-react';
 import ShipmentForm from '@/components/Forms/ShipmentForm';
 import ShipmentsList from '@/components/Lists/ShipmentsList';
 import DriverForm from '@/components/Forms/DriverForm';
 import CompanyRegistrationForm from '@/components/Forms/CompanyRegistrationForm';
+import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
 
 const TransporterDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -42,6 +44,8 @@ const TransporterDashboard: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [myShipments, setMyShipments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [selectedShipmentForPrint, setSelectedShipmentForPrint] = useState<any>(null);
 
   useEffect(() => {
     fetchTransporterShipments();
@@ -346,6 +350,17 @@ const TransporterDashboard: React.FC = () => {
                   </div>
                   
                   <div className="flex space-x-2 ml-4">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        setSelectedShipmentForPrint(shipment);
+                        setShowPrintModal(true);
+                      }}
+                      title="طباعة نموذج التتبع"
+                    >
+                      <Printer className="h-4 w-4" />
+                    </Button>
                     <Button variant="ghost" size="sm" title="عرض الموقع">
                       <MapPin className="h-4 w-4" />
                     </Button>
@@ -461,6 +476,27 @@ const TransporterDashboard: React.FC = () => {
                 onClose={() => setShowCompanyForm(false)}
                 onSuccess={() => setRefreshTrigger(prev => prev + 1)}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showPrintModal && selectedShipmentForPrint && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-10 right-0 text-white hover:text-white/80 z-10"
+                onClick={() => {
+                  setShowPrintModal(false);
+                  setSelectedShipmentForPrint(null);
+                }}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+              <ShipmentPDFViewer shipment={selectedShipmentForPrint} />
             </div>
           </div>
         </div>

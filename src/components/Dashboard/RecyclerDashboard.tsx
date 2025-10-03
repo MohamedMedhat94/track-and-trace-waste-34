@@ -15,9 +15,12 @@ import {
   PlayCircle,
   StopCircle,
   Download,
-  Building2
+  Building2,
+  Printer,
+  X
 } from 'lucide-react';
 import ShipmentNotifications from '@/components/Notifications/ShipmentNotifications';
+import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
 
 const RecyclerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -31,6 +34,8 @@ const RecyclerDashboard: React.FC = () => {
     totalWasteProcessed: '0 kg'
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const [selectedShipmentForPrint, setSelectedShipmentForPrint] = useState<any>(null);
 
   useEffect(() => {
     fetchReceivedShipments();
@@ -327,11 +332,19 @@ const RecyclerDashboard: React.FC = () => {
                     </div>
                     
                     <div className="flex space-x-2 ml-4">
-                      <Button variant="ghost" size="sm">
-                        <Eye className="h-4 w-4" />
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedShipmentForPrint(shipment);
+                          setShowPrintModal(true);
+                        }}
+                        title="طباعة نموذج التتبع"
+                      >
+                        <Printer className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
+                      <Button variant="ghost" size="sm" title="عرض التفاصيل">
+                        <Eye className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -381,6 +394,27 @@ const RecyclerDashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {showPrintModal && selectedShipmentForPrint && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-auto">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute -top-10 right-0 text-white hover:text-white/80 z-10"
+                onClick={() => {
+                  setShowPrintModal(false);
+                  setSelectedShipmentForPrint(null);
+                }}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+              <ShipmentPDFViewer shipment={selectedShipmentForPrint} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
