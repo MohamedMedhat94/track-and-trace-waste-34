@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth, UserRole } from '@/context/AuthContext';
-import { initializeAdminUser } from '@/utils/adminSetup';
 import { LogIn, UserPlus, Building2 } from 'lucide-react';
 
 const Auth: React.FC = () => {
@@ -31,11 +30,6 @@ const Auth: React.FC = () => {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
-    // Initialize admin user on app start
-    initializeAdminUser();
-  }, []);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
