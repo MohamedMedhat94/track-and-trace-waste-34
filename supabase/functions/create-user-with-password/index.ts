@@ -27,9 +27,76 @@ serve(async (req) => {
 
     const { email, password, userData, userType } = await req.json()
 
+    // Validate required fields
     if (!email || !password || !userData || !userType) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate email length
+    if (email.length > 255) {
+      return new Response(
+        JSON.stringify({ error: 'Email too long (max 255 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      return new Response(
+        JSON.stringify({ error: 'Password must be at least 8 characters long' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (password.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Password too long (max 100 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!/[A-Z]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: 'Password must contain at least one uppercase letter' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!/[a-z]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: 'Password must contain at least one lowercase letter' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!/[0-9]/.test(password)) {
+      return new Response(
+        JSON.stringify({ error: 'Password must contain at least one number' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate name length
+    const name = userData.name || userData.contact_person || '';
+    if (name.length > 100) {
+      return new Response(
+        JSON.stringify({ error: 'Name too long (max 100 characters)' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate phone format if provided
+    if (userData.phone && !/^\+?[1-9]\d{1,14}$/.test(userData.phone.replace(/[\s\-\(\)]/g, ''))) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid phone number format' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }

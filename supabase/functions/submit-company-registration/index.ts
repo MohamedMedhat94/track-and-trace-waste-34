@@ -53,6 +53,62 @@ serve(async (req) => {
         )
       }
 
+      // Validate email length
+      if (companyData.email.length > 255) {
+        return new Response(
+          JSON.stringify({ error: 'البريد الإلكتروني طويل جداً (الحد الأقصى 255 حرف)' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Validate password strength
+      if (companyData.password.length < 8) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (companyData.password.length > 100) {
+        return new Response(
+          JSON.stringify({ error: 'كلمة المرور طويلة جداً (الحد الأقصى 100 حرف)' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (!/[A-Z]/.test(companyData.password)) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (!/[a-z]/.test(companyData.password)) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (!/[0-9]/.test(companyData.password)) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Validate company name length
+      if (companyData.name.trim().length === 0 || companyData.name.length > 200) {
+        return new Response(
+          JSON.stringify({ error: 'اسم الشركة يجب أن يكون بين 1 و 200 حرف' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Validate phone format
+      if (!/^\+?[1-9]\d{1,14}$/.test(companyData.phone.replace(/[\s\-\(\)]/g, ''))) {
+        return new Response(
+          JSON.stringify({ error: 'تنسيق رقم الهاتف غير صالح' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       // إنشاء حساب المستخدم أولاً
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: companyData.email,

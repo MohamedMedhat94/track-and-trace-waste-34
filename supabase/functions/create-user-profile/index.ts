@@ -53,6 +53,54 @@ serve(async (req) => {
         )
       }
 
+      // Validate email length
+      if (email.length > 255) {
+        return new Response(
+          JSON.stringify({ error: 'البريد الإلكتروني طويل جداً (الحد الأقصى 255 حرف)' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Validate password strength
+      if (password.length < 8) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (password.length > 100) {
+        return new Response(
+          JSON.stringify({ error: 'كلمة المرور طويلة جداً (الحد الأقصى 100 حرف)' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (!/[A-Z]/.test(password)) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (!/[a-z]/.test(password)) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      if (!/[0-9]/.test(password)) {
+        return new Response(
+          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Validate fullName length
+      if (fullName.trim().length === 0 || fullName.length > 100) {
+        return new Response(
+          JSON.stringify({ error: 'الاسم الكامل يجب أن يكون بين 1 و 100 حرف' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       // إنشاء المستخدم
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
