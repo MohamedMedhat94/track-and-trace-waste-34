@@ -13,7 +13,6 @@ import {
   Building2,
   FileText,
   Eye,
-  Edit,
   MapPin,
   X,
   Printer
@@ -21,7 +20,6 @@ import {
 import ShipmentForm from '@/components/Forms/ShipmentForm';
 import ShipmentsList from '@/components/Lists/ShipmentsList';
 import DriverForm from '@/components/Forms/DriverForm';
-import CompanyRegistrationForm from '@/components/Forms/CompanyRegistrationForm';
 import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
 
 const TransporterDashboard: React.FC = () => {
@@ -39,7 +37,6 @@ const TransporterDashboard: React.FC = () => {
   const [showShipmentForm, setShowShipmentForm] = useState(false);
   const [showDriverForm, setShowDriverForm] = useState(false);
   const [showShipmentsList, setShowShipmentsList] = useState(false);
-  const [showCompanyForm, setShowCompanyForm] = useState(false);
   const [editingShipment, setEditingShipment] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [myShipments, setMyShipments] = useState<any[]>([]);
@@ -138,22 +135,16 @@ const TransporterDashboard: React.FC = () => {
       action: () => setShowDriverForm(true),
     },
     {
-      title: 'تسجيل شركة تابعة',
-      description: 'إضافة شركة مولدة أو مدورة',
-      icon: Building2,
-      action: () => setShowCompanyForm(true),
-    },
-    {
       title: 'عرض الشحنات',
       description: 'إدارة وتعديل الشحنات',
-      icon: Building2,
+      icon: FileText,
       action: () => setShowShipmentsList(true),
     },
     {
-      title: 'أنواع النفايات',
-      description: 'تكوين فئات النفايات',
-      icon: FileText,
-      action: () => navigate('/manage-waste-types'),
+      title: 'تتبع السائقين',
+      description: 'متابعة مواقع السائقين',
+      icon: MapPin,
+      action: () => navigate('/driver-tracking'),
     },
   ];
 
@@ -271,12 +262,12 @@ const TransporterDashboard: React.FC = () => {
               <Button
                 key={index}
                 variant="outline"
-                className="h-auto flex-col items-start p-4 text-left"
+                className="h-auto flex-col items-start p-4 text-left hover:bg-primary/5"
                 onClick={action.action}
               >
                 <action.icon className="h-6 w-6 mb-2 text-primary" />
                 <div>
-                  <p className="font-semibold">{action.title}</p>
+                  <p className="font-semibold font-cairo">{action.title}</p>
                   <p className="text-sm text-muted-foreground">{action.description}</p>
                 </div>
               </Button>
@@ -351,31 +342,24 @@ const TransporterDashboard: React.FC = () => {
                   
                   <div className="flex space-x-2 ml-4">
                     <Button 
-                      variant="ghost" 
+                      variant="outline" 
                       size="sm" 
                       onClick={() => {
                         setSelectedShipmentForPrint(shipment);
                         setShowPrintModal(true);
                       }}
                       title="طباعة نموذج التتبع"
+                      className="hover:bg-primary/10"
                     >
-                      <Printer className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" title="عرض الموقع">
-                      <MapPin className="h-4 w-4" />
+                      <Printer className="h-4 w-4 ml-1" />
+                      <span className="text-xs">طباعة</span>
                     </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => {
-                        setEditingShipment(shipment);
-                        setShowShipmentForm(true);
-                      }}
-                      title="تعديل الشحنة"
+                      onClick={() => navigate(`/shipment/${shipment.id}`)}
+                      title="عرض التفاصيل"
                     >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" title="عرض التفاصيل">
                       <Eye className="h-4 w-4" />
                     </Button>
                   </div>
@@ -460,26 +444,6 @@ const TransporterDashboard: React.FC = () => {
         </div>
       )}
 
-      {showCompanyForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="max-w-4xl w-full max-h-[90vh] overflow-auto">
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute -top-10 right-0 text-white hover:text-white/80 z-10"
-                onClick={() => setShowCompanyForm(false)}
-              >
-                <X className="h-6 w-6" />
-              </Button>
-              <CompanyRegistrationForm
-                onClose={() => setShowCompanyForm(false)}
-                onSuccess={() => setRefreshTrigger(prev => prev + 1)}
-              />
-            </div>
-          </div>
-        </div>
-      )}
 
       {showPrintModal && selectedShipmentForPrint && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">

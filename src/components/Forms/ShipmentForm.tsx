@@ -208,6 +208,13 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
         driver_id: formData.driver_entry_type === 'registered' ? formData.driver_id : null,
       };
 
+      console.log('ShipmentForm: Submitting shipment data:', {
+        ...shipmentData,
+        generator_company_id: shipmentData.generator_company_id,
+        transporter_company_id: shipmentData.transporter_company_id,
+        recycler_company_id: shipmentData.recycler_company_id
+      });
+
       if (editingShipment) {
         const { error } = await supabase
           .from('shipments')
@@ -221,11 +228,14 @@ const ShipmentForm: React.FC<ShipmentFormProps> = ({ onClose, editingShipment })
           description: "تم تحديث بيانات الشحنة بنجاح",
         });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('shipments')
-          .insert([shipmentData]);
+          .insert([shipmentData])
+          .select();
 
         if (error) throw error;
+
+        console.log('ShipmentForm: Shipment created successfully:', data);
 
         toast({
           title: "تم إنشاء الشحنة",

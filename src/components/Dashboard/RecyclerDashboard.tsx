@@ -85,11 +85,17 @@ const RecyclerDashboard: React.FC = () => {
   const fetchReceivedShipments = async () => {
     try {
       setIsLoading(true);
+      console.log('RecyclerDashboard: Fetching shipments for company_id:', user?.companyId);
+      
       const { data, error } = await supabase
         .rpc('get_company_shipments', { company_type: 'recycler' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('RecyclerDashboard: Error fetching shipments:', error);
+        throw error;
+      }
 
+      console.log('RecyclerDashboard: Received shipments:', data);
       setShipments(data || []);
       
       // Calculate stats
@@ -331,19 +337,26 @@ const RecyclerDashboard: React.FC = () => {
                       </div>
                     </div>
                     
-                    <div className="flex space-x-2 ml-4">
+                     <div className="flex space-x-2 ml-4">
                       <Button 
-                        variant="ghost" 
+                        variant="outline" 
                         size="sm"
                         onClick={() => {
                           setSelectedShipmentForPrint(shipment);
                           setShowPrintModal(true);
                         }}
                         title="طباعة نموذج التتبع"
+                        className="hover:bg-primary/10"
                       >
-                        <Printer className="h-4 w-4" />
+                        <Printer className="h-4 w-4 ml-1" />
+                        <span className="text-xs">طباعة</span>
                       </Button>
-                      <Button variant="ghost" size="sm" title="عرض التفاصيل">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => navigate(`/shipment/${shipment.id}`)}
+                        title="عرض التفاصيل"
+                      >
                         <Eye className="h-4 w-4" />
                       </Button>
                     </div>
