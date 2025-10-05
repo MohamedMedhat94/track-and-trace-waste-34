@@ -77,6 +77,42 @@ const DriverForm: React.FC<DriverFormProps> = ({ onClose, editingDriver }) => {
       return;
     }
 
+    // Validate password strength for new drivers
+    if (!editingDriver && formData.password) {
+      if (formData.password.length < 8) {
+        toast({
+          title: "كلمة مرور ضعيفة",
+          description: "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!/[A-Z]/.test(formData.password)) {
+        toast({
+          title: "كلمة مرور ضعيفة",
+          description: "يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل (A-Z)",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!/[a-z]/.test(formData.password)) {
+        toast({
+          title: "كلمة مرور ضعيفة",
+          description: "يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل (a-z)",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!/[0-9]/.test(formData.password)) {
+        toast({
+          title: "كلمة مرور ضعيفة",
+          description: "يجب أن تحتوي كلمة المرور على رقم واحد على الأقل (0-9)",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
 
     try {
@@ -332,6 +368,9 @@ const DriverForm: React.FC<DriverFormProps> = ({ onClose, editingDriver }) => {
                 placeholder="كلمة مرور قوية للحساب"
                 required
               />
+              <p className="text-sm text-muted-foreground mt-2">
+                يجب أن تحتوي على: 8 أحرف على الأقل، حرف كبير (A-Z)، حرف صغير (a-z)، ورقم (0-9)
+              </p>
             </div>
           )}
 
