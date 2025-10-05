@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Key, Mail, User, Shield, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { Key, Mail, User, Shield, RefreshCw } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useButtonValidation } from '@/hooks/useButtonValidation';
@@ -20,7 +20,6 @@ interface UserCredential {
   is_active: boolean;
   created_at: string;
   last_login?: string;
-  temp_password?: string;
   password_reset_needed: boolean;
 }
 
@@ -31,7 +30,6 @@ const PasswordManager: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<UserCredential | null>(null);
   const [newPassword, setNewPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
 
@@ -49,10 +47,8 @@ const PasswordManager: React.FC = () => {
 
       if (error) throw error;
       
-      // Add temporary password field for display
       const usersWithCredentials = data?.map(user => ({
         ...user,
-        temp_password: generateTempPassword(),
         password_reset_needed: !user.last_login
       })) || [];
       
@@ -69,17 +65,13 @@ const PasswordManager: React.FC = () => {
     }
   };
 
-  const generateTempPassword = () => {
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+  const generateNewPassword = () => {
+    // Generate a strong random password
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
     let password = '';
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 12; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    return password;
-  };
-
-  const generateNewPassword = () => {
-    const password = generateTempPassword();
     setNewPassword(password);
     setGeneratedPassword(password);
   };
@@ -129,7 +121,7 @@ const PasswordManager: React.FC = () => {
       // Update local state
       setUsers(prev => prev.map(user => 
         user.id === selectedUser.id 
-          ? { ...user, temp_password: newPassword, password_reset_needed: false }
+          ? { ...user, password_reset_needed: false }
           : user
       ));
       setSelectedUser(null);
@@ -229,14 +221,10 @@ const PasswordManager: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-muted-foreground">
                   <div className="flex items-center">
                     <Mail className="h-4 w-4 ml-2" />
                     {user.email}
-                  </div>
-                  <div className="flex items-center">
-                    <Key className="h-4 w-4 ml-2" />
-                    كلمة المرور: {showPassword ? (user.temp_password || '••••••••') : '••••••••'}
                   </div>
                   <div className="text-xs">
                     آخر دخول: {user.last_login 
@@ -246,14 +234,6 @@ const PasswordManager: React.FC = () => {
                 </div>
               </div>
               <div className="flex space-x-2 space-x-reverse">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-                
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
