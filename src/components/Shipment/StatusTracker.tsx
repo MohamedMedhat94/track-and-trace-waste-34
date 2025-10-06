@@ -39,6 +39,7 @@ const StatusTracker: React.FC<StatusTrackerProps> = ({
   const { toast } = useToast();
   const { validateAndExecute } = useButtonValidation();
 
+  // التسلسل الصحيح للحالات: مسجل → قيد النقل → قيد التسليم → قيد الفرز → مكتمل
   const statusConfig = {
     pending: { 
       label: 'معلّق', 
@@ -68,26 +69,20 @@ const StatusTracker: React.FC<StatusTrackerProps> = ({
       label: 'قيد الفرز', 
       color: 'bg-orange-500 text-white', 
       icon: Package,
-      next: ['recycling']
-    },
-    recycling: { 
-      label: 'قيد التدوير', 
-      color: 'bg-green-600 text-white', 
-      icon: CheckCircle,
       next: ['completed']
     },
     completed: { 
       label: 'مكتمل', 
-      color: 'bg-gray-800 text-white', 
+      color: 'bg-green-600 text-white', 
       icon: CheckCircle,
       next: []
     }
   };
 
-  const canUpdateStatus = user?.role === 'admin' || 
-    (user?.role === 'transporter') || 
-    (user?.role === 'recycler') ||
-    (user?.role === 'generator');
+  // شركات النقل لها صلاحية كاملة لتغيير الحالات (مثل المسؤول)
+  // المدورون يمكنهم تحديث الحالات المتعلقة بعملياتهم
+  const canUpdateStatus = user?.role === 'admin' || user?.role === 'transporter' || user?.role === 'recycler';
+
 
   const handleUpdateStatus = async () => {
     if (!canUpdateStatus || selectedStatus === currentStatus) return;
@@ -154,7 +149,8 @@ const StatusTracker: React.FC<StatusTrackerProps> = ({
   };
 
   const getStatusSteps = () => {
-    const steps = ['pending', 'registered', 'in_transit', 'delivery', 'sorting', 'recycling', 'completed'];
+    // التسلسل الصحيح: مسجل → قيد النقل → قيد التسليم → قيد الفرز → مكتمل
+    const steps = ['registered', 'in_transit', 'delivery', 'sorting', 'completed'];
     const currentIndex = steps.indexOf(currentStatus);
     
     return steps.map((step, index) => {

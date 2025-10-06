@@ -290,7 +290,7 @@ const CreateShipment: React.FC = () => {
         delivery_date: deliveryDate?.toISOString(),
         pickup_location: formData.pickup_location,
         delivery_location: formData.delivery_location,
-        status: 'pending',
+        status: 'registered', // الحالة الأولية: مسجّل
         created_by: user?.id,
         ...(formData.pickup_latitude && formData.pickup_longitude && {
           pickup_latitude: parseFloat(formData.pickup_latitude),
