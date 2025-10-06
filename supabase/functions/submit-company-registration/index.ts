@@ -101,10 +101,13 @@ serve(async (req) => {
         )
       }
 
-      // Validate phone format
-      if (!/^\+?[1-9]\d{1,14}$/.test(companyData.phone.replace(/[\s\-\(\)]/g, ''))) {
+      // Validate phone format (allow numbers starting with 0 for local numbers)
+      const cleanPhone = companyData.phone.replace(/[\s\-\(\)]/g, '');
+      // Allow numbers starting with + or 0, followed by digits (length 8-15)
+      if (!/^(\+?[1-9]\d{7,14}|0\d{7,14})$/.test(cleanPhone)) {
+        console.log('Phone validation failed for:', cleanPhone);
         return new Response(
-          JSON.stringify({ error: 'تنسيق رقم الهاتف غير صالح' }),
+          JSON.stringify({ error: 'تنسيق رقم الهاتف غير صالح. يجب أن يكون رقم هاتف صحيح' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }

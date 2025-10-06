@@ -139,13 +139,14 @@ const DriverForm: React.FC<DriverFormProps> = ({ onClose, editingDriver }) => {
       } else {
         // Create new driver with user account
         try {
+          // Prepare userData without password field
+          const { password: _, ...driverData } = formData;
+          
           const { data: createUserData, error: createUserError } = await supabase.functions.invoke('create-user-with-password', {
             body: {
               email: formData.email,
               password: formData.password,
-              userData: {
-                ...formData
-              },
+              userData: driverData,
               userType: 'driver'
             }
           });

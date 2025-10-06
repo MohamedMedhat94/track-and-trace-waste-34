@@ -179,11 +179,14 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onClose, onSubmit, editData, 
         } else {
           // Admin creating company with user account
           try {
+            // Prepare userData without password field
+            const { password: _, ...companyDataWithoutPassword } = formData;
+            
             const { data: createUserData, error: createUserError } = await supabase.functions.invoke('create-user-with-password', {
               body: {
                 email: formData.email,
                 password: formData.password,
-                userData: formData,
+                userData: companyDataWithoutPassword,
                 userType: 'company'
               }
             });

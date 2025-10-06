@@ -93,12 +93,17 @@ serve(async (req) => {
       )
     }
 
-    // Validate phone format if provided
-    if (userData.phone && !/^\+?[1-9]\d{1,14}$/.test(userData.phone.replace(/[\s\-\(\)]/g, ''))) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid phone number format' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+    // Validate phone format if provided (allow numbers starting with 0 for local numbers)
+    if (userData.phone) {
+      const cleanPhone = userData.phone.replace(/[\s\-\(\)]/g, '');
+      // Allow numbers starting with + or 0, followed by digits (length 8-15)
+      if (!/^(\+?[1-9]\d{7,14}|0\d{7,14})$/.test(cleanPhone)) {
+        console.log('Phone validation failed for:', cleanPhone);
+        return new Response(
+          JSON.stringify({ error: 'Invalid phone number format' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     console.log('Creating user:', { email, userType })
