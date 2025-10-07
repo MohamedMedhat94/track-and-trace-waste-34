@@ -151,24 +151,66 @@ const DriverDashboard: React.FC = () => {
     }
   };
 
-  const handleStartDelivery = (shipmentId: string) => {
+  const handleStartDelivery = async (shipmentId: string, actualShipmentId: string) => {
     if (!locationSharing) {
+      toast({
+        title: "تنبيه",
+        description: "يجب تفعيل مشاركة الموقع أولاً",
+        variant: "destructive",
+      });
       handleLocationShare();
-    } else {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('update_shipment_status', {
+        shipment_id_param: actualShipmentId,
+        new_status_param: 'in_transit',
+        notes_param: 'بدء النقل من قبل السائق'
+      });
+
+      if (error) throw error;
+
       toast({
         title: "تم بدء التسليم",
         description: `تم بدء التسليم للشحنة ${shipmentId}`,
       });
-      // Update shipment status logic here
+      
+      fetchDriverShipments();
+    } catch (error: any) {
+      console.error('خطأ في بدء التسليم:', error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في بدء التسليم",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleEndDelivery = (shipmentId: string) => {
-    toast({
-      title: "تم إكمال التسليم",
-      description: `تم إكمال التسليم للشحنة ${shipmentId}`,
-    });
-    // Update shipment status logic here
+  const handleEndDelivery = async (shipmentId: string, actualShipmentId: string) => {
+    try {
+      const { error } = await supabase.rpc('update_shipment_status', {
+        shipment_id_param: actualShipmentId,
+        new_status_param: 'delivery',
+        notes_param: 'إكمال التسليم من قبل السائق'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم إكمال التسليم",
+        description: `تم إكمال التسليم للشحنة ${shipmentId}`,
+      });
+      
+      fetchDriverShipments();
+    } catch (error: any) {
+      console.error('خطأ في إكمال التسليم:', error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في إكمال التسليم",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -325,7 +367,7 @@ const DriverDashboard: React.FC = () => {
                     {delivery.canStartDelivery && (
                       <Button 
                         size="sm" 
-                        onClick={() => handleStartDelivery(delivery.id)}
+                        onClick={() => handleStartDelivery(delivery.id, delivery.shipmentId)}
                       >
                         <PlayCircle className="h-4 w-4 mr-1" />
                         بدء التسليم
@@ -335,7 +377,7 @@ const DriverDashboard: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleEndDelivery(delivery.id)}
+                        onClick={() => handleEndDelivery(delivery.id, delivery.shipmentId)}
                       >
                         <StopCircle className="h-4 w-4 mr-1" />
                         إكمال التسليم

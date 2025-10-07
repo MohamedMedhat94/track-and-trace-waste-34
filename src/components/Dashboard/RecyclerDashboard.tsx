@@ -162,6 +162,58 @@ const RecyclerDashboard: React.FC = () => {
     }
   };
 
+  const handleStartSorting = async (shipmentId: string) => {
+    try {
+      const { error } = await supabase.rpc('update_shipment_status', {
+        shipment_id_param: shipmentId,
+        new_status_param: 'sorting',
+        notes_param: 'بدء عملية الفرز'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم بدء الفرز",
+        description: "تم تحديث حالة الشحنة إلى قيد الفرز",
+      });
+      
+      fetchReceivedShipments();
+    } catch (error: any) {
+      console.error('خطأ في بدء الفرز:', error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في بدء عملية الفرز",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleEndSorting = async (shipmentId: string) => {
+    try {
+      const { error } = await supabase.rpc('update_shipment_status', {
+        shipment_id_param: shipmentId,
+        new_status_param: 'completed',
+        notes_param: 'إنهاء عملية الفرز'
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "تم إنهاء الفرز",
+        description: "تم تحديث حالة الشحنة إلى مكتمل",
+      });
+      
+      fetchReceivedShipments();
+    } catch (error: any) {
+      console.error('خطأ في إنهاء الفرز:', error);
+      toast({
+        title: "خطأ",
+        description: error.message || "فشل في إنهاء عملية الفرز",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -264,10 +316,8 @@ const RecyclerDashboard: React.FC = () => {
           ) : (
             <div className="space-y-4">
               {shipments.map((shipment) => {
-                const canStartSorting = shipment.status === 'delivered';
+                const canStartSorting = shipment.status === 'delivery';
                 const canEndSorting = shipment.status === 'sorting';
-                const canStartRecycling = shipment.status === 'sorted';
-                const canEndRecycling = shipment.status === 'recycling';
 
                 return (
                   <div
@@ -305,27 +355,23 @@ const RecyclerDashboard: React.FC = () => {
                       {/* Action Buttons */}
                       <div className="flex flex-wrap gap-2">
                         {canStartSorting && (
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleStartSorting(shipment.id)}
+                          >
                             <PlayCircle className="h-4 w-4 mr-1" />
                             بدء الفرز
                           </Button>
                         )}
                         {canEndSorting && (
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEndSorting(shipment.id)}
+                          >
                             <StopCircle className="h-4 w-4 mr-1" />
-                            إنهاء الفرز
-                          </Button>
-                        )}
-                        {canStartRecycling && (
-                          <Button size="sm" variant="outline">
-                            <PlayCircle className="h-4 w-4 mr-1" />
-                            بدء إعادة التدوير
-                          </Button>
-                        )}
-                        {canEndRecycling && (
-                          <Button size="sm" variant="outline">
-                            <StopCircle className="h-4 w-4 mr-1" />
-                            إنهاء إعادة التدوير
+                            إنهاء الفرز وإكمال الشحنة
                           </Button>
                         )}
                       </div>
