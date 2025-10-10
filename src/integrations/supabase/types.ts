@@ -66,7 +66,6 @@ export type Database = {
           location_longitude: number | null
           name: string
           operating_license_no: string | null
-          password_hash: string | null
           phone: string | null
           registered_activity: string | null
           signup_timestamp: string | null
@@ -75,7 +74,6 @@ export type Database = {
           type: string
           union_membership_no: string | null
           updated_at: string
-          username: string | null
         }
         Insert: {
           address?: string | null
@@ -98,7 +96,6 @@ export type Database = {
           location_longitude?: number | null
           name: string
           operating_license_no?: string | null
-          password_hash?: string | null
           phone?: string | null
           registered_activity?: string | null
           signup_timestamp?: string | null
@@ -107,7 +104,6 @@ export type Database = {
           type: string
           union_membership_no?: string | null
           updated_at?: string
-          username?: string | null
         }
         Update: {
           address?: string | null
@@ -130,7 +126,6 @@ export type Database = {
           location_longitude?: number | null
           name?: string
           operating_license_no?: string | null
-          password_hash?: string | null
           phone?: string | null
           registered_activity?: string | null
           signup_timestamp?: string | null
@@ -139,7 +134,6 @@ export type Database = {
           type?: string
           union_membership_no?: string | null
           updated_at?: string
-          username?: string | null
         }
         Relationships: []
       }
@@ -269,7 +263,6 @@ export type Database = {
           location_longitude: number | null
           name: string
           national_id: string | null
-          password_hash: string | null
           phone: string | null
           route_history: Json | null
           signup_timestamp: string | null
@@ -277,7 +270,6 @@ export type Database = {
           transport_company_id: string | null
           updated_at: string
           user_id: string | null
-          username: string | null
           vehicle_plate: string | null
           vehicle_type: string | null
         }
@@ -302,7 +294,6 @@ export type Database = {
           location_longitude?: number | null
           name: string
           national_id?: string | null
-          password_hash?: string | null
           phone?: string | null
           route_history?: Json | null
           signup_timestamp?: string | null
@@ -310,7 +301,6 @@ export type Database = {
           transport_company_id?: string | null
           updated_at?: string
           user_id?: string | null
-          username?: string | null
           vehicle_plate?: string | null
           vehicle_type?: string | null
         }
@@ -335,7 +325,6 @@ export type Database = {
           location_longitude?: number | null
           name?: string
           national_id?: string | null
-          password_hash?: string | null
           phone?: string | null
           route_history?: Json | null
           signup_timestamp?: string | null
@@ -343,7 +332,6 @@ export type Database = {
           transport_company_id?: string | null
           updated_at?: string
           user_id?: string | null
-          username?: string | null
           vehicle_plate?: string | null
           vehicle_type?: string | null
         }
@@ -1252,6 +1240,10 @@ export type Database = {
           role: string
           username: string
         }[]
+      }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_roles: {
         Args: { _user_id: string }
