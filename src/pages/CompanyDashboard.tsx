@@ -88,8 +88,19 @@ const fetchCompanyData = async () => {
     try {
       setLoading(true);
 
+      // Verify session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn('No active session in CompanyDashboard');
+        toast.error('انتهت الجلسة - يرجى تسجيل الدخول مرة أخرى');
+        setLoading(false);
+        return;
+      }
+
       // Fetch company info and shipments
       let shipmentsData: CompanyShipment[] = [];
+
+      console.log('CompanyDashboard: Profile data:', profile);
 
       if (profile?.company_id) {
         // User is linked to a company
@@ -107,13 +118,21 @@ const fetchCompanyData = async () => {
         if (profile.role === 'transporter') companyType = 'transporter';
         else if (profile.role === 'recycler') companyType = 'recycler';
 
+        console.log('CompanyDashboard: Fetching shipments for type:', companyType);
+
         const { data, error } = await supabase
           .rpc('get_company_shipments', { company_type: companyType });
 
-        if (error) throw error;
+        if (error) {
+          console.error('CompanyDashboard: RPC error:', error);
+          throw error;
+        }
+
+        console.log('CompanyDashboard: Received shipments:', data);
         shipmentsData = data || [];
       } else {
         // User not linked to company - try to find company by email matching or role
+        console.warn('CompanyDashboard: User has no company_id');
         setCompanyInfo(null);
         
         // Get all shipments for this user (fallback)
@@ -169,7 +188,10 @@ const fetchCompanyData = async () => {
 
     } catch (error: any) {
       console.error('Error fetching company data:', error);
-      toast.error('حدث خطأ في تحميل بيانات الشركة');
+      const errorMessage = error.message?.includes('session')
+        ? 'انتهت الجلسة - يرجى تسجيل الدخول مرة أخرى'
+        : 'حدث خطأ في تحميل بيانات الشركة';
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

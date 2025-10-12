@@ -57,54 +57,83 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
+
+    // Check for existing session first
+    const initSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Session error:', error);
+          if (isMounted) {
+            setLoading(false);
+          }
+          return;
+        }
+
+        console.log('Initial session check:', session ? 'Session found' : 'No session');
+        
+        if (isMounted) {
+          setSession(session);
+          
+          if (session?.user) {
+            // Set basic user data immediately
+            setUser({
+              id: session.user.id,
+              name: session.user.email?.split('@')[0] || 'مستخدم',
+              email: session.user.email || '',
+              role: 'generator', // Default role, will be updated after profile fetch
+            });
+            
+            // Fetch detailed profile
+            await fetchUserProfile(session.user.id);
+          } else {
+            setLoading(false);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing session:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setLoading(false);
+      async (event, session) => {
+        console.log('Auth state changed:', event, session ? 'Session active' : 'No session');
         
-        if (session?.user) {
-          // Set basic user data immediately for instant redirect
-          setUser({
-            id: session.user.id,
-            name: session.user.email?.split('@')[0] || 'مستخدم',
-            email: session.user.email || '',
-            role: 'generator', // Default role, will be updated after profile fetch
-          });
+        if (isMounted) {
+          setSession(session);
           
-          // Fetch detailed profile in background
-          setTimeout(() => {
-            fetchUserProfile(session.user.id);
-          }, 0);
-        } else {
-          setUser(null);
-          setProfile(null);
+          if (session?.user) {
+            // Set basic user data immediately for instant redirect
+            setUser({
+              id: session.user.id,
+              name: session.user.email?.split('@')[0] || 'مستخدم',
+              email: session.user.email || '',
+              role: 'generator', // Default role, will be updated after profile fetch
+            });
+            
+            // Fetch detailed profile in background
+            await fetchUserProfile(session.user.id);
+          } else {
+            setUser(null);
+            setProfile(null);
+            setLoading(false);
+          }
         }
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      
-      if (session?.user) {
-        // Set basic user data immediately
-        setUser({
-          id: session.user.id,
-          name: session.user.email?.split('@')[0] || 'مستخدم',
-          email: session.user.email || '',
-          role: 'generator', // Default role, will be updated after profile fetch
-        });
-        
-        // Fetch detailed profile in background
-        setTimeout(() => {
-          fetchUserProfile(session.user.id);
-        }, 0);
-      }
-    });
+    initSession();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (userId: string) => {

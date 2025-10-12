@@ -92,11 +92,31 @@ const TransporterDashboard: React.FC = () => {
   const fetchTransporterShipments = async () => {
     try {
       setIsLoading(true);
+      
+      // Verify session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn('No active session in TransporterDashboard');
+        toast({
+          title: "انتهت الجلسة",
+          description: "يرجى تسجيل الدخول مرة أخرى",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('TransporterDashboard: Fetching shipments for company_id:', user?.companyId);
+      
       const { data, error } = await supabase
         .rpc('get_company_shipments', { company_type: 'transporter' });
 
-      if (error) throw error;
+      if (error) {
+        console.error('TransporterDashboard: Error from RPC:', error);
+        throw error;
+      }
 
+      console.log('TransporterDashboard: Received data:', data);
       setMyShipments(data || []);
       
       // Update stats based on real data
@@ -111,9 +131,13 @@ const TransporterDashboard: React.FC = () => {
 
     } catch (error: any) {
       console.error('خطأ في جلب الشحنات:', error);
+      const errorMessage = error.message?.includes('session') 
+        ? "انتهت الجلسة - يرجى تسجيل الدخول مرة أخرى" 
+        : error.message || "حدث خطأ غير متوقع";
+      
       toast({
         title: "خطأ في جلب البيانات",
-        description: error.message || "حدث خطأ غير متوقع",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

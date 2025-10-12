@@ -85,13 +85,27 @@ const RecyclerDashboard: React.FC = () => {
   const fetchReceivedShipments = async () => {
     try {
       setIsLoading(true);
+      
+      // Verify session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn('No active session in RecyclerDashboard');
+        toast({
+          title: "انتهت الجلسة",
+          description: "يرجى تسجيل الدخول مرة أخرى",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       console.log('RecyclerDashboard: Fetching shipments for company_id:', user?.companyId);
       
       const { data, error } = await supabase
         .rpc('get_company_shipments', { company_type: 'recycler' });
 
       if (error) {
-        console.error('RecyclerDashboard: Error fetching shipments:', error);
+        console.error('RecyclerDashboard: Error from RPC:', error);
         throw error;
       }
 
@@ -113,9 +127,13 @@ const RecyclerDashboard: React.FC = () => {
 
     } catch (error: any) {
       console.error('خطأ في جلب الشحنات:', error);
+      const errorMessage = error.message?.includes('session') 
+        ? "انتهت الجلسة - يرجى تسجيل الدخول مرة أخرى" 
+        : error.message || "حدث خطأ غير متوقع";
+      
       toast({
         title: "خطأ في جلب البيانات",
-        description: error.message || "حدث خطأ غير متوقع",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

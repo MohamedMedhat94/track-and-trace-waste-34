@@ -51,6 +51,18 @@ const AdminDashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
+      // Verify session before making requests
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.warn('No active session in AdminDashboard');
+        toast({
+          title: "انتهت الجلسة",
+          description: "يرجى تسجيل الدخول مرة أخرى",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Fetch shipments count
       const { count: shipmentsCount } = await supabase
         .from('shipments')
@@ -74,10 +86,19 @@ const AdminDashboard: React.FC = () => {
         .eq('role', 'driver');
 
       // Fetch active drivers count using secure function
-      const { data: activeDriversData, error: activeDriversError } = await supabase
-        .rpc('get_active_drivers');
-      
-      const activeDriversCount = activeDriversData?.length || 0;
+      let activeDriversCount = 0;
+      try {
+        const { data: activeDriversData, error: activeDriversError } = await supabase
+          .rpc('get_active_drivers');
+        
+        if (activeDriversError) {
+          console.error('Error fetching active drivers:', activeDriversError);
+        } else {
+          activeDriversCount = activeDriversData?.length || 0;
+        }
+      } catch (driverError) {
+        console.error('Exception fetching active drivers:', driverError);
+      }
 
       // Fetch pending users count
       const { count: pendingUsersCount } = await supabase
@@ -90,11 +111,18 @@ const AdminDashboard: React.FC = () => {
         activeShipments: activeShipmentsCount || 0,
         companies: companiesCount || 0,
         drivers: driversCount || 0,
-        activeDrivers: activeDriversCount || 0,
+        activeDrivers: activeDriversCount,
         pendingUsers: pendingUsersCount || 0
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching stats:', error);
+      if (error.message?.includes('session')) {
+        toast({
+          title: "خطأ في الجلسة",
+          description: "يرجى تسجيل الدخول مرة أخرى",
+          variant: "destructive",
+        });
+      }
     }
   };
 
