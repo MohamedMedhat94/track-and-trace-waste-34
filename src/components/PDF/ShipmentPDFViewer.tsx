@@ -87,62 +87,117 @@ const ShipmentPDFViewer: React.FC<ShipmentPDFViewerProps> = ({
           <meta charset="utf-8">
           <title>تفاصيل الشحنة - ${shipment.shipment_number}</title>
           <style>
+            @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+            @page { size: A4; margin: 15mm; }
             * { margin: 0; padding: 0; box-sizing: border-box; }
             body { 
-              font-family: 'Arial', sans-serif; 
-              font-size: 12px; 
-              line-height: 1.4;
+              font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; 
+              font-size: 13px; 
+              line-height: 1.7;
               direction: rtl;
               background: white;
+              color: #1a1a1a;
             }
             .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-            .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
-            .title { font-size: 24px; font-weight: bold; color: #2563eb; margin-bottom: 10px; }
-            .subtitle { font-size: 14px; color: #666; }
-            .section { margin-bottom: 25px; }
-            .section-title { 
-              font-size: 16px; 
-              font-weight: bold; 
-              color: #1f2937; 
-              margin-bottom: 10px;
-              padding: 8px 12px;
-              background: #f3f4f6;
-              border-right: 4px solid #2563eb;
+            .header { 
+              text-align: center; 
+              margin-bottom: 30px; 
+              border-bottom: 3px solid #006400; 
+              padding-bottom: 20px; 
             }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-            .info-item { margin-bottom: 8px; }
-            .info-label { font-weight: bold; color: #374151; display: inline-block; min-width: 120px; }
-            .info-value { color: #111827; }
+            .title { 
+              font-size: 28px; 
+              font-weight: 700; 
+              color: #006400; 
+              margin-bottom: 8px;
+              text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            }
+            .subtitle { 
+              font-size: 16px; 
+              color: #374151;
+              font-weight: 600;
+              margin: 8px 0;
+            }
+            .metadata {
+              font-size: 14px;
+              color: #555;
+              margin-top: 12px;
+              padding: 10px;
+              background: #f8f9fa;
+              border-radius: 6px;
+            }
+            .section { margin-bottom: 25px; page-break-inside: avoid; }
+            .section-title { 
+              font-size: 18px; 
+              font-weight: 700; 
+              color: #006400; 
+              margin-bottom: 12px;
+              padding: 10px 14px;
+              background: #f0f9ff;
+              border-right: 4px solid #006400;
+              border-radius: 4px;
+            }
+            .info-grid { 
+              display: grid; 
+              grid-template-columns: 1fr 1fr; 
+              gap: 20px; 
+            }
+            .info-item { 
+              margin-bottom: 10px;
+              padding: 6px 0;
+              border-bottom: 1px dashed #d1d5db;
+            }
+            .info-label { 
+              font-weight: 600; 
+              color: #374151; 
+              display: inline-block; 
+              min-width: 130px; 
+            }
+            .info-value { 
+              color: #1f2937;
+              font-weight: 400;
+            }
             .status-badge {
               display: inline-block;
-              padding: 4px 12px;
+              padding: 6px 14px;
               border-radius: 20px;
-              font-size: 11px;
-              font-weight: bold;
+              font-size: 12px;
+              font-weight: 600;
             }
             .status-pending { background: #fef3c7; color: #92400e; }
             .status-in_transit { background: #dbeafe; color: #1e40af; }
             .status-delivered { background: #d1fae5; color: #065f46; }
+            .status-sorting { background: #e9d5ff; color: #6b21a8; }
             .status-completed { background: #dcfce7; color: #166534; }
             .company-box {
-              border: 1px solid #d1d5db;
+              border: 2px solid #e5e7eb;
               border-radius: 8px;
-              padding: 15px;
+              padding: 16px;
               margin-bottom: 15px;
-              background: #f9fafb;
+              background: #fafbfc;
             }
-            .company-name { font-weight: bold; font-size: 14px; color: #1f2937; margin-bottom: 8px; }
-            .company-details { font-size: 11px; color: #6b7280; }
+            .company-name { 
+              font-weight: 700; 
+              font-size: 15px; 
+              color: #1f2937; 
+              margin-bottom: 10px; 
+            }
+            .company-details { 
+              font-size: 12px; 
+              color: #6b7280; 
+              line-height: 1.6;
+            }
             .footer {
-              margin-top: 40px;
+              margin-top: 50px;
               padding-top: 20px;
-              border-top: 1px solid #d1d5db;
+              border-top: 2px solid #e5e7eb;
               text-align: center;
               color: #6b7280;
-              font-size: 10px;
+              font-size: 11px;
+              page-break-inside: avoid;
             }
             @media print {
-              body { -webkit-print-color-adjust: exact; }
+              body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
               .container { max-width: none; margin: 0; padding: 15px; }
             }
           </style>
@@ -150,8 +205,13 @@ const ShipmentPDFViewer: React.FC<ShipmentPDFViewerProps> = ({
         <body>
           <div class="container">
             <div class="header">
-              <div class="title">نظام تتبع النفايات</div>
+              <div class="title">آي ريسايكل</div>
+              <div style="color: #006400; font-size: 14px; margin: 5px 0;">نظام إدارة وتتبع النفايات</div>
               <div class="subtitle">تفاصيل الشحنة</div>
+              <div class="metadata">
+                <strong>رقم الشحنة:</strong> ${shipment.shipment_number}<br>
+                <strong>تاريخ الطباعة:</strong> ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+              </div>
             </div>
             
             <div class="section">

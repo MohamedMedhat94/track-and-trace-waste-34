@@ -163,90 +163,117 @@ const generatePDF = async () => {
         <title>نموذج تتبع المخلفات - ${shipmentId}</title>
         <style>
           @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap');
+          @page { size: A4; margin: 15mm; }
           @media print {
-            body { margin: 0; }
+            body { margin: 0; padding: 0; }
             .no-print { display: none !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
           }
-          * { box-sizing: border-box; }
+          * { box-sizing: border-box; margin: 0; padding: 0; }
           body { 
-            font-family: 'Cairo', sans-serif; 
+            font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; 
             direction: rtl; 
-            margin: 0;
             padding: 20px;
-            color: #333;
-            line-height: 1.6;
+            color: #1a1a1a;
+            line-height: 1.7;
+            font-size: 13px;
+            background: white;
           }
+          .container { max-width: 800px; margin: 0 auto; }
           .header { 
             text-align: center; 
-            border-bottom: 2px solid #006400; 
+            border-bottom: 3px solid #006400; 
             padding-bottom: 20px;
             margin-bottom: 30px;
-          }
-          .logo { 
-            max-width: 150px; 
-            margin-bottom: 10px; 
+            page-break-after: avoid;
           }
           .company-name { 
             color: #006400; 
-            font-size: 24px; 
-            font-weight: bold; 
-            margin: 10px 0;
+            font-size: 28px; 
+            font-weight: 700; 
+            margin: 15px 0;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
           }
           .report-title { 
-            font-size: 20px; 
-            margin: 10px 0; 
+            font-size: 22px;
+            font-weight: 600; 
+            margin: 12px 0;
+            color: #333;
+          }
+          .metadata {
+            font-size: 14px;
+            color: #555;
+            margin-top: 12px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
           }
           .section { 
-            margin: 20px 0; 
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
+            margin: 25px 0; 
+            padding: 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            background: #fafbfc;
+            page-break-inside: avoid;
           }
           .section-title { 
-            font-weight: bold; 
+            font-weight: 700; 
             color: #006400; 
             font-size: 18px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #d1d5db;
           }
           .data-row { 
             display: flex; 
-            justify-content: space-between; 
-            margin: 8px 0; 
-            border-bottom: 1px dotted #ccc;
-            padding-bottom: 5px;
+            justify-content: space-between;
+            align-items: baseline;
+            margin: 10px 0; 
+            border-bottom: 1px dashed #d1d5db;
+            padding: 8px 0;
           }
+          .data-row:last-child { border-bottom: none; }
           .label { 
-            font-weight: bold; 
-            min-width: 150px;
+            font-weight: 600; 
+            min-width: 180px;
+            color: #374151;
+          }
+          .value {
+            flex: 1;
+            text-align: left;
+            color: #1f2937;
           }
           .footer { 
             text-align: center; 
-            margin-top: 40px; 
-            font-size: 12px; 
-            color: #666;
-            border-top: 1px solid #ddd;
+            margin-top: 50px; 
+            font-size: 11px; 
+            color: #6b7280;
+            border-top: 2px solid #e5e7eb;
             padding-top: 20px;
+            page-break-inside: avoid;
           }
           .status-badge {
             background: #006400;
             color: white;
-            padding: 5px 10px;
-            border-radius: 15px;
+            padding: 6px 14px;
+            border-radius: 20px;
             font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <img src="/src/assets/company-logo.png" alt="شعار الشركة" style="max-height: 80px; margin-bottom: 10px;">
+        <div class="container">
+          <div class="header">
+            <div class="company-name">آي ريسايكل</div>
+            <div style="color: #006400; font-size: 16px; margin: 5px 0;">نظام إدارة وتتبع النفايات</div>
+            <div class="report-title">نموذج تتبع المخلفات</div>
+            <div class="metadata">
+              <strong>رقم الشحنة:</strong> ${shipmentId}<br>
+              <strong>تاريخ الإصدار:</strong> ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+            </div>
           </div>
-          <div class="company-name">آي ريسايكل لإدارة النفايات</div>
-          <div class="report-title">نموذج تتبع المخلفات</div>
-          <div style="font-size: 16px; color: #666; margin-top: 10px;">
-            رقم الشحنة: ${shipmentId} | تاريخ الإصدار: ${new Date().toLocaleDateString('ar-SA')}
-          </div>
-        </div>
 
         <div class="section">
           <div class="section-title">بيانات الجهة المولدة للمخلفات</div>
