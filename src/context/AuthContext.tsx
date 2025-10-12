@@ -58,8 +58,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let loadingTimeout: NodeJS.Timeout;
 
-    // Check for existing session first
+    // Safety timeout - stop loading after 5 seconds max
+    loadingTimeout = setTimeout(() => {
+      if (isMounted && loading) {
+        console.warn('Loading timeout - forcing stop');
+        setLoading(false);
+      }
+    }, 5000);
+
+    // Check for existing session
     const initSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -67,34 +76,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (error) {
           console.error('Session error:', error);
           if (isMounted) {
+            setSession(null);
+            setUser(null);
+            setProfile(null);
             setLoading(false);
           }
           return;
         }
 
-        console.log('Initial session check:', session ? 'Session found' : 'No session');
-        
         if (isMounted) {
           setSession(session);
           
           if (session?.user) {
-            // Set basic user data immediately
-            setUser({
-              id: session.user.id,
-              name: session.user.email?.split('@')[0] || 'مستخدم',
-              email: session.user.email || '',
-              role: 'generator', // Default role, will be updated after profile fetch
-            });
-            
-            // Fetch detailed profile
+            // Fetch profile immediately
             await fetchUserProfile(session.user.id);
           } else {
+            setUser(null);
+            setProfile(null);
             setLoading(false);
           }
         }
       } catch (error) {
         console.error('Error initializing session:', error);
         if (isMounted) {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
           setLoading(false);
         }
       }
@@ -103,27 +110,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session ? 'Session active' : 'No session');
+        console.log('Auth event:', event);
         
-        if (isMounted) {
-          setSession(session);
-          
-          if (session?.user) {
-            // Set basic user data immediately for instant redirect
-            setUser({
-              id: session.user.id,
-              name: session.user.email?.split('@')[0] || 'مستخدم',
-              email: session.user.email || '',
-              role: 'generator', // Default role, will be updated after profile fetch
-            });
-            
-            // Fetch detailed profile in background
-            await fetchUserProfile(session.user.id);
-          } else {
-            setUser(null);
-            setProfile(null);
-            setLoading(false);
-          }
+        // Skip initial SIGNED_IN event if we already have session
+        if (event === 'SIGNED_IN' && user) {
+          return;
+        }
+        
+        if (!isMounted) return;
+        
+        setSession(session);
+        
+        if (session?.user && event !== 'TOKEN_REFRESHED') {
+          await fetchUserProfile(session.user.id);
+        } else if (!session) {
+          setUser(null);
+          setProfile(null);
+          setLoading(false);
         }
       }
     );
@@ -132,6 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     return () => {
       isMounted = false;
+      clearTimeout(loadingTimeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -146,22 +150,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
       if (error) {
         console.error('Error fetching profile:', error);
+        setLoading(false);
         return;
       }
 
       if (profileData) {
         setProfile(profileData as UserProfile);
-        // Update user with complete profile data
-        setUser(prevUser => ({
+        setUser({
           id: profileData.user_id,
-          name: profileData.full_name || profileData.email || prevUser?.name || 'مستخدم',
-          email: profileData.email || prevUser?.email || '',
+          name: profileData.full_name || profileData.email || 'مستخدم',
+          email: profileData.email || '',
           role: profileData.role as UserRole,
           companyId: profileData.company_id || undefined,
-        }));
+        });
       }
+      
+      setLoading(false);
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
+      setLoading(false);
     }
   };
 
