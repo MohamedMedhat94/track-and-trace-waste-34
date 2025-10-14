@@ -58,71 +58,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
-    let loadingTimeout: NodeJS.Timeout;
+    let profileFetched = false;
 
-    // Safety timeout - stop loading after 5 seconds max
-    loadingTimeout = setTimeout(() => {
-      if (isMounted && loading) {
-        console.warn('Loading timeout - forcing stop');
-        setLoading(false);
-      }
-    }, 5000);
-
-    // Check for existing session
-    const initSession = async () => {
+    // Initialize session
+    const initAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Session error:', error);
-          if (isMounted) {
-            setSession(null);
-            setUser(null);
-            setProfile(null);
-            setLoading(false);
-          }
-          return;
-        }
-
-        if (isMounted) {
-          setSession(session);
-          
-          if (session?.user) {
-            // Fetch profile immediately
-            await fetchUserProfile(session.user.id);
-          } else {
-            setUser(null);
-            setProfile(null);
-            setLoading(false);
-          }
-        }
-      } catch (error) {
-        console.error('Error initializing session:', error);
-        if (isMounted) {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    };
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth event:', event);
-        
-        // Skip initial SIGNED_IN event if we already have session
-        if (event === 'SIGNED_IN' && user) {
-          return;
-        }
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (!isMounted) return;
         
         setSession(session);
         
-        if (session?.user && event !== 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          profileFetched = true;
           await fetchUserProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Init auth error:', error);
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    // Listen to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+        
+        // Skip if we already fetched profile during init
+        if (event === 'INITIAL_SESSION' && profileFetched) {
+          return;
+        }
+        
+        setSession(session);
+        
+        if (session?.user && event !== 'TOKEN_REFRESHED') {
+          // Use setTimeout to avoid blocking
+          setTimeout(() => {
+            if (isMounted) fetchUserProfile(session.user.id);
+          }, 0);
         } else if (!session) {
           setUser(null);
           setProfile(null);
@@ -131,11 +106,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     );
 
-    initSession();
+    initAuth();
 
     return () => {
       isMounted = false;
-      clearTimeout(loadingTimeout);
       subscription.unsubscribe();
     };
   }, []);
@@ -149,7 +123,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching profile:', error);
+        console.error('Profile fetch error:', error);
         setLoading(false);
         return;
       }
@@ -163,11 +137,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           role: profileData.role as UserRole,
           companyId: profileData.company_id || undefined,
         });
+      } else {
+        console.warn('No profile found for user:', userId);
       }
       
       setLoading(false);
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
+      console.error('Profile fetch exception:', error);
       setLoading(false);
     }
   };
@@ -204,21 +180,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true);
-    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        setLoading(false);
-        return { error };
-      }
+      if (error) return { error };
 
       if (data.user) {
-        // التحقق من تفعيل الحساب
+        // Check activation status
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('is_active')
@@ -226,9 +197,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           .single();
 
         if (profileError || !profileData) {
-          console.error('Error fetching profile:', profileError);
           await supabase.auth.signOut();
-          setLoading(false);
           return { 
             error: { 
               message: 'خطأ في تحميل بيانات المستخدم' 
@@ -238,7 +207,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (!profileData.is_active) {
           await supabase.auth.signOut();
-          setLoading(false);
           return { 
             error: { 
               message: 'حسابك لم يتم تفعيله بعد. يرجى انتظار موافقة المدير.' 
@@ -246,7 +214,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           };
         }
 
-        // Log login event in background
+        // Background logging
         setTimeout(async () => {
           try {
             await supabase.rpc('log_auth_event', {
@@ -255,21 +223,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               action_param: 'login'
             });
 
-            // Update last login for profiles in background
             await supabase
               .from('profiles')
               .update({ last_login: new Date().toISOString() })
               .eq('user_id', data.user.id);
           } catch (logError) {
-            console.error('Failed to log login event:', logError);
+            console.error('Logging failed:', logError);
           }
         }, 0);
       }
 
-      // Profile will be loaded by the auth state change listener
       return { error: null };
     } catch (error: any) {
-      setLoading(false);
       return { error };
     }
   };
