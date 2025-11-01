@@ -493,6 +493,8 @@ export type Database = {
           last_login: string | null
           phone: string | null
           role: string
+          terms_accepted: boolean | null
+          terms_accepted_at: string | null
           updated_at: string
           user_id: string
           username: string | null
@@ -510,6 +512,8 @@ export type Database = {
           last_login?: string | null
           phone?: string | null
           role: string
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id: string
           username?: string | null
@@ -527,6 +531,8 @@ export type Database = {
           last_login?: string | null
           phone?: string | null
           role?: string
+          terms_accepted?: boolean | null
+          terms_accepted_at?: string | null
           updated_at?: string
           user_id?: string
           username?: string | null
@@ -911,6 +917,65 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      terms_acceptance: {
+        Row: {
+          accepted_at: string
+          company_id: string | null
+          company_name: string
+          company_stamp_data: string | null
+          company_type: string
+          created_at: string | null
+          full_name: string
+          id: string
+          ip_address: string | null
+          signature_data: string | null
+          terms_content: string
+          terms_version: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          accepted_at?: string
+          company_id?: string | null
+          company_name: string
+          company_stamp_data?: string | null
+          company_type: string
+          created_at?: string | null
+          full_name: string
+          id?: string
+          ip_address?: string | null
+          signature_data?: string | null
+          terms_content: string
+          terms_version?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          accepted_at?: string
+          company_id?: string | null
+          company_name?: string
+          company_stamp_data?: string | null
+          company_type?: string
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          ip_address?: string | null
+          signature_data?: string | null
+          terms_content?: string
+          terms_version?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terms_acceptance_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_credentials_audit: {
         Row: {
@@ -1314,6 +1379,10 @@ export type Database = {
       get_user_roles: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"][]
+      }
+      has_accepted_terms: {
+        Args: { required_version?: string; user_id_param: string }
+        Returns: boolean
       }
       has_role: {
         Args: {
