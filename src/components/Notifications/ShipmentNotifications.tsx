@@ -83,8 +83,9 @@ const ShipmentNotifications: React.FC = () => {
     }
   };
 
-  const markAsRead = async (notificationId: string) => {
+  const handleApprove = async (notificationId: string, shipmentId: string) => {
     try {
+      // Mark as read and remove from notifications
       const { error } = await supabase
         .from('shipment_notifications')
         .update({ 
@@ -95,15 +96,51 @@ const ShipmentNotifications: React.FC = () => {
 
       if (error) throw error;
 
-      setNotifications(prev => 
-        prev.map(n => 
-          n.id === notificationId 
-            ? { ...n, is_read: true } 
-            : n
-        )
-      );
+      // Remove from local state
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+      toast({
+        title: "تم الموافقة",
+        description: "تمت الموافقة على الشحنة بنجاح",
+      });
     } catch (error: any) {
-      console.error('Error marking notification as read:', error);
+      console.error('Error approving notification:', error);
+      toast({
+        title: "خطأ في الموافقة",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReject = async (notificationId: string, shipmentId: string) => {
+    try {
+      // Mark as read and remove from notifications
+      const { error } = await supabase
+        .from('shipment_notifications')
+        .update({ 
+          is_read: true, 
+          read_at: new Date().toISOString() 
+        })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setNotifications(prev => prev.filter(n => n.id !== notificationId));
+
+      toast({
+        title: "تم الرفض",
+        description: "تم رفض الشحنة",
+        variant: "destructive",
+      });
+    } catch (error: any) {
+      console.error('Error rejecting notification:', error);
+      toast({
+        title: "خطأ في الرفض",
+        description: error.message,
+        variant: "destructive",
+      });
     }
   };
 
@@ -209,15 +246,25 @@ const ShipmentNotifications: React.FC = () => {
                       <span className="text-xs text-muted-foreground">
                         {new Date(notification.created_at).toLocaleString('ar-SA')}
                       </span>
-                      {!notification.is_read && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => markAsRead(notification.id)}
-                          className="text-xs"
-                        >
-                          تعليم كمقروء
-                        </Button>
+                      {!notification.is_read && notification.notification_type === 'approval_request' && (
+                        <div className="flex space-x-2 space-x-reverse">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={() => handleApprove(notification.id, notification.shipment_id)}
+                            className="text-xs bg-green-600 hover:bg-green-700"
+                          >
+                            موافقة
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleReject(notification.id, notification.shipment_id)}
+                            className="text-xs"
+                          >
+                            رفض
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
