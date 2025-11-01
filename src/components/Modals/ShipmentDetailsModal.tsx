@@ -9,10 +9,12 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Package, Truck, Building2, User, Calendar, Weight, FileText, MapPin, Download } from 'lucide-react';
 import PDFGenerator from '@/components/PDF/PDFGenerator';
+import ShipmentReportForm from '@/components/Shipment/ShipmentReportForm';
 
 interface ShipmentDetailsModalProps {
   open: boolean;
@@ -102,9 +104,15 @@ const ShipmentDetailsModal: React.FC<ShipmentDetailsModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 mt-4">
-          {/* Current Status */}
-          <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+        <Tabs defaultValue="details" className="mt-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">التفاصيل</TabsTrigger>
+            <TabsTrigger value="report">التقرير</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-6 mt-4">
+            {/* Current Status */}
+            <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
             <div>
               <p className="text-sm text-muted-foreground mb-1">الحالة الحالية</p>
               <Badge className={getStatusColor(shipment.status)}>
@@ -248,14 +256,26 @@ const ShipmentDetailsModal: React.FC<ShipmentDetailsModalProps> = ({
             </div>
           )}
 
-          {/* Actions */}
-          <div className="flex justify-end space-x-2 space-x-reverse pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              إغلاق
-            </Button>
-            <PDFGenerator shipmentId={shipment.shipment_number} data={shipment} />
-          </div>
-        </div>
+            {/* Actions */}
+            <div className="flex justify-end space-x-2 space-x-reverse pt-4 border-t">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                إغلاق
+              </Button>
+              <PDFGenerator shipmentId={shipment.shipment_number} data={shipment} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="report" className="mt-4">
+            <ShipmentReportForm
+              shipmentId={shipment.id}
+              shipmentNumber={shipment.shipment_number}
+              currentReport={shipment.shipment_report}
+              reportCreatedBy={shipment.report_created_by}
+              reportCreatedAt={shipment.report_created_at}
+              onReportAdded={onStatusUpdate}
+            />
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );

@@ -28,6 +28,7 @@ import CompanyDashboard from "./pages/CompanyDashboard";
 import AdminCompaniesStats from "./pages/AdminCompaniesStats";
 import UserCompanyAssignment from "./pages/UserCompanyAssignment";
 import TestingDashboard from "./pages/TestingDashboard";
+import CompanySignatures from "./pages/CompanySignatures";
 
 const ShipmentDetails = React.lazy(() => import('./pages/ShipmentDetails'));
 
@@ -69,6 +70,7 @@ const App = () => (
             <Route path="/total-drivers" element={<TotalDriversDetails />} />
             <Route path="/company-dashboard" element={<CompanyDashboard />} />
             <Route path="/admin-companies-stats" element={<AdminCompaniesStats />} />
+            <Route path="/company-signatures" element={<CompanySignatures />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

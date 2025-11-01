@@ -137,6 +137,50 @@ export type Database = {
         }
         Relationships: []
       }
+      company_signatures: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          id: string
+          signature_image_url: string | null
+          signature_uploaded_at: string | null
+          stamp_image_url: string | null
+          stamp_uploaded_at: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          id?: string
+          signature_image_url?: string | null
+          signature_uploaded_at?: string | null
+          stamp_image_url?: string | null
+          stamp_uploaded_at?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          id?: string
+          signature_image_url?: string | null
+          signature_uploaded_at?: string | null
+          stamp_image_url?: string | null
+          stamp_uploaded_at?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_signatures_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_locations: {
         Row: {
           accuracy: number | null
@@ -635,7 +679,10 @@ export type Database = {
           recycler_rejection_reason: string | null
           recycling_end_time: string | null
           recycling_start_time: string | null
+          report_created_at: string | null
+          report_created_by: string | null
           shipment_number: string
+          shipment_report: string | null
           shipment_status: string | null
           sorting_end_time: string | null
           sorting_start_time: string | null
@@ -691,7 +738,10 @@ export type Database = {
           recycler_rejection_reason?: string | null
           recycling_end_time?: string | null
           recycling_start_time?: string | null
+          report_created_at?: string | null
+          report_created_by?: string | null
           shipment_number: string
+          shipment_report?: string | null
           shipment_status?: string | null
           sorting_end_time?: string | null
           sorting_start_time?: string | null
@@ -747,7 +797,10 @@ export type Database = {
           recycler_rejection_reason?: string | null
           recycling_end_time?: string | null
           recycling_start_time?: string | null
+          report_created_at?: string | null
+          report_created_by?: string | null
           shipment_number?: string
+          shipment_report?: string | null
           shipment_status?: string | null
           sorting_end_time?: string | null
           sorting_start_time?: string | null
@@ -1041,6 +1094,10 @@ export type Database = {
         }
         Returns: string
       }
+      add_shipment_report: {
+        Args: { report_text: string; shipment_id_param: string }
+        Returns: undefined
+      }
       admin_reset_user_password: {
         Args: { new_password: string; target_email: string }
         Returns: undefined
@@ -1058,10 +1115,7 @@ export type Database = {
         Args: { target_company_id: string; target_user_id: string }
         Returns: undefined
       }
-      auto_approve_expired_shipments: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      auto_approve_expired_shipments: { Args: never; Returns: undefined }
       create_notification: {
         Args: {
           notification_data?: Json
@@ -1082,7 +1136,7 @@ export type Database = {
         Returns: string
       }
       get_active_drivers: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           current_latitude: number
           current_longitude: number
@@ -1098,7 +1152,7 @@ export type Database = {
         }[]
       }
       get_all_drivers: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -1117,7 +1171,7 @@ export type Database = {
         }[]
       }
       get_companies_for_selection: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           id: string
           location_address: string
@@ -1126,7 +1180,7 @@ export type Database = {
         }[]
       }
       get_companies_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_shipments: number
           company_id: string
@@ -1162,11 +1216,11 @@ export type Database = {
         }[]
       }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_dashboard_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_shipments: number
           pending_users: number
@@ -1185,7 +1239,7 @@ export type Database = {
         }[]
       }
       get_driver_shipments: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           delivery_location: string
@@ -1200,7 +1254,7 @@ export type Database = {
         }[]
       }
       get_drivers_for_selection: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           id: string
           name: string
@@ -1209,7 +1263,7 @@ export type Database = {
         }[]
       }
       get_drivers_for_tracking: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           current_latitude: number
           current_longitude: number
@@ -1222,8 +1276,20 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      get_shipment_with_signatures: {
+        Args: { shipment_id_param: string }
+        Returns: {
+          generator_signature: string
+          generator_stamp: string
+          recycler_signature: string
+          recycler_stamp: string
+          shipment_data: Json
+          transporter_signature: string
+          transporter_stamp: string
+        }[]
+      }
       get_unassigned_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           email: string
@@ -1256,14 +1322,8 @@ export type Database = {
         }
         Returns: boolean
       }
-      increment_counter: {
-        Args: { counter_name: string }
-        Returns: undefined
-      }
-      is_admin: {
-        Args: Record<PropertyKey, never>
-        Returns: boolean
-      }
+      increment_counter: { Args: { counter_name: string }; Returns: undefined }
+      is_admin: { Args: never; Returns: boolean }
       log_auth_event: {
         Args: {
           action_param: string
@@ -1295,10 +1355,7 @@ export type Database = {
         Args: { target_email: string }
         Returns: undefined
       }
-      reset_all_users: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      reset_all_users: { Args: never; Returns: undefined }
       send_whatsapp_notification: {
         Args: {
           message_param: string
