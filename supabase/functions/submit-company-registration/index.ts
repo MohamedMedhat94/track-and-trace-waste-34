@@ -152,8 +152,8 @@ serve(async (req) => {
           operating_license_no: companyData.operating_license_no || null,
           registered_activity: companyData.registered_activity || null,
           facility_reg_no: companyData.facility_reg_no || null,
-          status: 'pending', // في انتظار موافقة المدير
-          is_active: false
+          status: 'active', // تفعيل فوري
+          is_active: true // تفعيل الشركة مباشرة
         }])
         .select()
 
