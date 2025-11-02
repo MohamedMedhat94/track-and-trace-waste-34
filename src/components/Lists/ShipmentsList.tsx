@@ -54,7 +54,14 @@ const ShipmentsList: React.FC<ShipmentsListProps> = ({ onEdit, onView, refreshTr
       const { data, error } = await supabase
         .from('shipments')
         .select(`
-          *,
+          id,
+          shipment_number,
+          status,
+          quantity,
+          created_at,
+          waste_description,
+          pickup_location,
+          delivery_location,
           generator_company:companies!shipments_generator_company_id_fkey(name),
           transporter_company:companies!shipments_transporter_company_id_fkey(name),
           recycler_company:companies!shipments_recycler_company_id_fkey(name),

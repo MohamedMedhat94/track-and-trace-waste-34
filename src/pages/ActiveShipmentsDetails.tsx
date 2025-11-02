@@ -36,7 +36,13 @@ const ActiveShipmentsDetails: React.FC = () => {
       const { data, error } = await supabase
         .from('shipments')
         .select(`
-          *,
+          id,
+          shipment_number,
+          status,
+          quantity,
+          pickup_date,
+          delivery_date,
+          created_at,
           generator_company:companies!shipments_generator_company_id_fkey(name),
           transporter_company:companies!shipments_transporter_company_id_fkey(name),
           recycler_company:companies!shipments_recycler_company_id_fkey(name)
