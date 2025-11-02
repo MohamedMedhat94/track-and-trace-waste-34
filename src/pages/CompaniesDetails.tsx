@@ -4,10 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Search, ArrowLeft, Users, Activity, Clock, Filter } from 'lucide-react';
+import { Building2, Search, ArrowLeft, Users, Activity, Clock, Filter, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/context/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface Company {
   id: string;
@@ -24,20 +36,38 @@ interface Company {
 const CompaniesDetails: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    checkAdminStatus();
     fetchCompanies();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     filterCompanies();
   }, [companies, searchTerm, typeFilter, statusFilter]);
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+    
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (!error && data) {
+      setIsAdmin(data.role === 'admin');
+    }
+  };
 
   const fetchCompanies = async () => {
     try {
@@ -98,6 +128,42 @@ const CompaniesDetails: React.FC = () => {
     setFilteredCompanies(filtered);
   };
 
+  const handleDeleteAllCompanies = async () => {
+    try {
+      setDeleting(true);
+      
+      const { error } = await supabase.rpc('delete_all_companies');
+      
+      if (error) {
+        console.error('Delete error:', error);
+        toast({
+          title: "خطأ في الحذف",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      toast({
+        title: "تم الحذف بنجاح",
+        description: "تم حذف جميع الشركات والبيانات المرتبطة بها",
+      });
+      
+      // إعادة تحميل البيانات
+      await fetchCompanies();
+      
+    } catch (error) {
+      console.error('Error deleting companies:', error);
+      toast({
+        title: "خطأ في العملية",
+        description: "حدث خطأ أثناء حذف الشركات",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const getTypeText = (type: string) => {
     switch (type) {
       case 'generator': return 'مولد نفايات';
@@ -156,10 +222,40 @@ const CompaniesDetails: React.FC = () => {
           <ArrowLeft className="h-4 w-4 ml-2" />
           العودة
         </Button>
-        <div>
+        <div className="flex-1 text-center">
           <h1 className="text-3xl font-bold font-cairo">تفاصيل الشركات</h1>
           <p className="text-muted-foreground">عرض وإدارة جميع الشركات المسجلة</p>
         </div>
+        {isAdmin && companies.length > 0 && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="flex items-center">
+                <Trash2 className="h-4 w-4 ml-2" />
+                حذف جميع الشركات
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="font-cairo">هل أنت متأكد؟</AlertDialogTitle>
+                <AlertDialogDescription className="font-cairo">
+                  هذا الإجراء سيقوم بحذف جميع الشركات والبيانات المرتبطة بها (الشحنات، السائقين، التوقيعات، إلخ).
+                  <br />
+                  <strong className="text-destructive">لا يمكن التراجع عن هذا الإجراء!</strong>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="font-cairo">إلغاء</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={handleDeleteAllCompanies}
+                  disabled={deleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-cairo"
+                >
+                  {deleting ? 'جاري الحذف...' : 'نعم، احذف الجميع'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </div>
 
       {/* Statistics Cards */}

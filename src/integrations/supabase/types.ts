@@ -1200,6 +1200,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_all_companies: { Args: never; Returns: undefined }
       get_active_drivers: {
         Args: never
         Returns: {

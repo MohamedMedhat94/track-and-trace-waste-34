@@ -180,7 +180,7 @@ serve(async (req) => {
           phone: companyData.phone,
           role: companyData.type,
           company_id: data[0].id,
-          is_active: false
+          is_active: true // تفعيل الحساب تلقائياً
         })
 
       if (profileError) {
@@ -190,7 +190,7 @@ serve(async (req) => {
           .from('profiles')
           .update({
             company_id: data[0].id,
-            is_active: false
+            is_active: true // تفعيل الحساب تلقائياً
           })
           .eq('user_id', authData.user.id)
       }
@@ -201,7 +201,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           data, 
-          message: 'تم تقديم طلب تسجيل الشركة بنجاح مع إنشاء حساب المستخدم، سيتم مراجعته من قبل الإدارة' 
+          message: 'تم تسجيل الشركة بنجاح! يمكنك الآن تسجيل الدخول إلى النظام' 
         }),
         { 
           status: 200, 
