@@ -116,15 +116,26 @@ serve(async (req) => {
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: companyData.email,
         password: companyData.password,
-        email_confirm: true,
+        email_confirm: true, // تأكيد البريد الإلكتروني تلقائياً
         user_metadata: {
           full_name: companyData.contact_person || companyData.name,
-          role: companyData.type
+          role: companyData.type,
+          is_active: true // تفعيل الحساب من البداية
         }
       })
 
       if (authError) {
         console.error('Auth error:', authError)
+        // تحقق إذا كان المستخدم موجود بالفعل
+        if (authError.message.includes('already registered')) {
+          return new Response(
+            JSON.stringify({ error: 'البريد الإلكتروني مسجل بالفعل. يرجى استخدام بريد إلكتروني آخر.' }),
+            { 
+              status: 400, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
+        }
         return new Response(
           JSON.stringify({ error: `خطأ في إنشاء المستخدم: ${authError.message}` }),
           { 
@@ -133,6 +144,8 @@ serve(async (req) => {
           }
         )
       }
+
+      console.log('User created successfully:', authData.user.id)
 
       // إدراج بيانات الشركة
       const { data, error } = await supabaseAdmin
@@ -170,29 +183,55 @@ serve(async (req) => {
         )
       }
 
-      // إنشاء ملف المستخدم
-      const { error: profileError } = await supabaseAdmin
-        .from('profiles')
-        .insert({
-          user_id: authData.user.id,
-          email: companyData.email,
-          full_name: companyData.contact_person || companyData.name,
-          phone: companyData.phone,
-          role: companyData.type,
-          company_id: data[0].id,
-          is_active: true // تفعيل الحساب تلقائياً
-        })
+      console.log('Company created successfully:', data[0].id)
 
-      if (profileError) {
-        console.error('Profile error:', profileError)
-        // قد يكون trigger أنشأه - نحدث بدلاً من ذلك
-        await supabaseAdmin
+      // إنشاء أو تحديث ملف المستخدم
+      // التحقق أولاً إذا كان الـ trigger أنشأ الـ profile
+      const { data: existingProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('user_id')
+        .eq('user_id', authData.user.id)
+        .single()
+
+      if (existingProfile) {
+        // الـ profile موجود، نحدثه فقط
+        console.log('Profile exists, updating...')
+        const { error: updateError } = await supabaseAdmin
           .from('profiles')
           .update({
             company_id: data[0].id,
-            is_active: true // تفعيل الحساب تلقائياً
+            phone: companyData.phone,
+            is_active: true, // تفعيل الحساب تلقائياً
+            full_name: companyData.contact_person || companyData.name,
+            role: companyData.type
           })
           .eq('user_id', authData.user.id)
+        
+        if (updateError) {
+          console.error('Profile update error:', updateError)
+        } else {
+          console.log('Profile updated successfully')
+        }
+      } else {
+        // الـ profile غير موجود، ننشئه
+        console.log('Profile does not exist, creating...')
+        const { error: insertError } = await supabaseAdmin
+          .from('profiles')
+          .insert({
+            user_id: authData.user.id,
+            email: companyData.email,
+            full_name: companyData.contact_person || companyData.name,
+            phone: companyData.phone,
+            role: companyData.type,
+            company_id: data[0].id,
+            is_active: true // تفعيل الحساب تلقائياً
+          })
+        
+        if (insertError) {
+          console.error('Profile insert error:', insertError)
+        } else {
+          console.log('Profile created successfully')
+        }
       }
 
       // لا نحتاج إلى إرسال إشعار في الوقت الحالي - تركيز على عمل النظام
