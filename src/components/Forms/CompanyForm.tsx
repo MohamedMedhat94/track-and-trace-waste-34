@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -152,32 +151,75 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onClose, onSubmit, editData, 
         
         if (submitViaEdgeFunction) {
           // Use the public registration edge function (bypasses RLS with service role)
-          try {
-            const { data: registrationData, error: registrationError } = await supabase.functions.invoke('submit-company-registration', {
-              body: formData
-            });
+          console.log('Calling submit-company-registration edge function');
+          const { data: registrationData, error: registrationError } = await supabase.functions.invoke('submit-company-registration', {
+            body: formData
+          });
 
-            if (registrationError) {
-              console.error('Registration edge function error:', registrationError);
-              throw registrationError;
-            }
-            
-            if (registrationData?.error) {
-              throw new Error(registrationData.error);
-            }
+          console.log('Edge function response:', { registrationData, registrationError });
 
-            console.log('Company registration via edge function result:', registrationData);
-            
-            toast({
-              title: "تم تقديم الطلب بنجاح", 
-              description: registrationData?.message || "تم تقديم طلب تسجيل الشركة، سيتم مراجعته من قبل الإدارة",
-            });
-          } catch (registrationError) {
-            console.error('Public registration failed:', registrationError);
-            throw registrationError;
+          if (registrationError) {
+            console.error('Registration edge function error:', registrationError);
+            const errorMsg = registrationError?.message || JSON.stringify(registrationError) || 'فشل الاتصال بخادم التسجيل';
+            throw new Error(errorMsg);
           }
+          
+          if (registrationData?.error) {
+            console.error('Registration data error:', registrationData.error);
+            throw new Error(registrationData.error);
+          }
+
+          console.log('Company registered successfully via edge function');
+          
+          toast({
+            title: "تم التسجيل بنجاح!", 
+            description: registrationData?.message || "تم تسجيل الشركة بنجاح! يمكنك الآن تسجيل الدخول",
+          });
         } else {
           // Admin creating company with user account
+          const payload = {
+            name: formData.name,
+            type: formData.type,
+            email: formData.email,
+            phone: formData.phone,
+            fax: formData.fax || null,
+            address: formData.address || null,
+            contact_person: formData.contact_person || null,
+            license_no: formData.license_no || null,
+            commercial_reg_no: formData.commercial_reg_no || null,
+            tax_id: formData.tax_id || null,
+            environmental_approval_no: formData.environmental_approval_no || null,
+            operating_license_no: formData.operating_license_no || null,
+            registered_activity: formData.registered_activity || null,
+            facility_reg_no: formData.facility_reg_no || null,
+            status: 'pending',
+            is_active: false
+          };
+
+          try {
+            const { data, error } = await supabase
+              .from('companies')
+              .insert([payload])
+              .select();
+
+            if (error) {
+              console.error('Error inserting company:', error);
+              throw error;
+            }
+
+            console.log('Company registration result:', data);
+            toast({
+              title: "تم تقديم الطلب بنجاح",
+              description: "تم تقديم طلب تسجيل الشركة، سيتم مراجعته من قبل الإدارة",
+            });
+          } catch (dbError: any) {
+            console.error('Database error:', dbError);
+            toast({
+              title: "خطأ في التسجيل",
+              description: dbError.message || "حدث خطأ أثناء تسجيل الشركة",
+              variant: "destructive",
+            });
+          }
           try {
             // Prepare userData without password field
             const { password: _, ...companyDataWithoutPassword } = formData;
@@ -241,7 +283,7 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onClose, onSubmit, editData, 
         }
 
         // Play success sound
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjuZ3/LCOS0FJHzJ8N2PPwoRXbTn7KpXFAlCm+H0xmkgBjuY3vLMey4FJHzK8N2PPgkTXLPm7KtYE6y'); 
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBjuZ3vLMey4FJHzK8N2PPgkTXLPm7KtYE6y'); 
         audio.play().catch(() => console.log('Could not play notification sound'));
       }
 
@@ -254,10 +296,19 @@ const CompanyForm: React.FC<CompanyFormProps> = ({ onClose, onSubmit, editData, 
       }
     } catch (error: any) {
       console.error('Error saving company:', error);
-      console.error('Error details:', { message: error?.message, code: error?.code, details: error?.details, hint: error?.hint });
+      console.error('Error details:', { 
+        message: error?.message, 
+        code: error?.code, 
+        details: error?.details, 
+        hint: error?.hint,
+        stack: error?.stack 
+      });
+      
+      const errorMessage = error?.message || error?.toString() || 'خطأ غير معروف';
+      
       toast({
         title: "خطأ في الحفظ",
-        description: `حدث خطأ أثناء حفظ بيانات الشركة: ${error?.message || 'خطأ غير معروف'}`,
+        description: `${errorMessage}`,
         variant: "destructive",
       });
     } finally {
