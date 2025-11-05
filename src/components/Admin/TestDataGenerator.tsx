@@ -7,6 +7,11 @@ import { Database, Users, AlertCircle, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const TestDataGenerator: React.FC = () => {
+  // Only available in development environment - security measure
+  if (import.meta.env.PROD) {
+    return null;
+  }
+
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [showCredentials, setShowCredentials] = useState(false);
@@ -15,25 +20,21 @@ const TestDataGenerator: React.FC = () => {
     {
       type: 'ناقل',
       email: 'transporter@test.com',
-      password: '123456789',
       company: 'شركة النقل السريع'
     },
     {
       type: 'مدور',
-      email: 'recycler@test.com', 
-      password: '123456789',
+      email: 'recycler@test.com',
       company: 'مصنع إعادة التدوير المتقدم'
     },
     {
       type: 'مولد 1',
       email: 'generator1@test.com',
-      password: '123456789', 
       company: 'شركة الصناعات الغذائية المصرية'
     },
     {
       type: 'مولد 2',
       email: 'generator2@test.com',
-      password: '123456789',
       company: 'مجموعة المصانع الكيماوية'
     }
   ];
@@ -129,7 +130,7 @@ const TestDataGenerator: React.FC = () => {
                         <div>
                           <span className="font-medium">كلمة المرور: </span>
                           <span className="font-mono bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
-                            {company.password}
+                            يتم إنشاؤها تلقائيًا (تحقق من سجلات النظام)
                           </span>
                         </div>
                       </div>
@@ -143,7 +144,7 @@ const TestDataGenerator: React.FC = () => {
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 <strong>ملاحظة:</strong> هذه بيانات اختبار فقط. لا تستخدمها في البيئة الإنتاجية.
-                كلمة المرور الموحدة لجميع الحسابات: <code>123456789</code>
+                يتم إنشاء كلمات المرور تلقائيًا عند إنشاء الحسابات.
               </AlertDescription>
             </Alert>
           </CardContent>
