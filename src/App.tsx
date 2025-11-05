@@ -31,6 +31,7 @@ import TestingDashboard from "./pages/TestingDashboard";
 import CompanySignatures from "./pages/CompanySignatures";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import ViewTermsAcceptance from "./pages/ViewTermsAcceptance";
+import CompanyDocuments from "./pages/CompanyDocuments";
 
 const ShipmentDetails = React.lazy(() => import('./pages/ShipmentDetails'));
 
@@ -75,6 +76,7 @@ const App = () => (
             <Route path="/company-signatures" element={<CompanySignatures />} />
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="/view-terms-acceptance" element={<ViewTermsAcceptance />} />
+            <Route path="/company-documents" element={<CompanyDocuments />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

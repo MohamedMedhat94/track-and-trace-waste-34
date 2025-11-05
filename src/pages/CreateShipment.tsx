@@ -180,34 +180,60 @@ const CreateShipment: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch companies
+      console.log('Fetching data for CreateShipment...');
+      
+      // Fetch companies directly with explicit columns
       const { data: companiesData, error: companiesError } = await supabase
-        .rpc('get_companies_for_selection');
+        .from('companies')
+        .select('id, name, type, location_address, category_display_name')
+        .eq('is_active', true)
+        .eq('status', 'active')
+        .order('name');
 
-      if (companiesError) throw companiesError;
+      if (companiesError) {
+        console.error('Companies error:', companiesError);
+        throw companiesError;
+      }
+
+      console.log('Companies fetched:', companiesData?.length || 0);
 
       // Fetch waste types
       const { data: wasteTypesData, error: wasteTypesError } = await supabase
         .from('waste_types')
-        .select('*')
+        .select('id, name, description')
         .order('name');
 
-      if (wasteTypesError) throw wasteTypesError;
+      if (wasteTypesError) {
+        console.error('Waste types error:', wasteTypesError);
+        throw wasteTypesError;
+      }
 
-      // Fetch drivers
+      console.log('Waste types fetched:', wasteTypesData?.length || 0);
+
+      // Fetch drivers directly with explicit columns
       const { data: driversData, error: driversError } = await supabase
-        .rpc('get_drivers_for_selection');
+        .from('drivers')
+        .select('id, name, vehicle_type, vehicle_plate')
+        .not('name', 'is', null)
+        .order('name');
 
-      if (driversError) throw driversError;
+      if (driversError) {
+        console.error('Drivers error:', driversError);
+        throw driversError;
+      }
+
+      console.log('Drivers fetched:', driversData?.length || 0);
 
       setCompanies(companiesData || []);
       setWasteTypes(wasteTypesData || []);
       setDrivers(driversData || []);
-    } catch (error) {
+      
+      console.log('Data loaded successfully');
+    } catch (error: any) {
       console.error('Error fetching data:', error);
       toast({
         title: "خطأ في تحميل البيانات",
-        description: "حدث خطأ أثناء تحميل البيانات المطلوبة",
+        description: error.message || "حدث خطأ أثناء تحميل البيانات المطلوبة",
         variant: "destructive",
       });
     }

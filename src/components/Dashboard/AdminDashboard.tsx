@@ -528,6 +528,18 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="outline"
                     className="h-auto flex-col items-start p-4 text-right"
+                    onClick={() => navigate('/company-documents')}
+                  >
+                    <FileText className="h-6 w-6 mb-2 text-primary" />
+                    <div>
+                      <p className="font-semibold font-cairo">مستندات الشركات</p>
+                      <p className="text-sm text-muted-foreground">عرض وطباعة مستندات الشروط والأختام</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col items-start p-4 text-right"
                     onClick={async () => {
                       const action = async () => {
                         // Quick test shipment creation
