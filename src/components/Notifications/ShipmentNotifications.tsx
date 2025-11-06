@@ -85,26 +85,28 @@ const ShipmentNotifications: React.FC = () => {
 
   const handleApprove = async (notificationId: string, shipmentId: string) => {
     try {
-      // Mark as read and remove from notifications
-      const { error } = await supabase
+      // Call approval RPC
+      const { error: approveError } = await supabase.rpc('approve_shipment', {
+        shipment_id_param: shipmentId,
+        approval_type: user?.role === 'generator' ? 'generator' : 'recycler',
+        is_approved: true
+      });
+
+      if (approveError) throw approveError;
+
+      // Mark notification as read
+      await supabase
         .from('shipment_notifications')
-        .update({ 
-          is_read: true, 
-          read_at: new Date().toISOString() 
-        })
+        .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId);
 
-      if (error) throw error;
-
-      // Remove from local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
-
+      
       toast({
         title: "تم الموافقة",
         description: "تمت الموافقة على الشحنة بنجاح",
       });
     } catch (error: any) {
-      console.error('Error approving notification:', error);
       toast({
         title: "خطأ في الموافقة",
         description: error.message,
@@ -115,18 +117,25 @@ const ShipmentNotifications: React.FC = () => {
 
   const handleReject = async (notificationId: string, shipmentId: string) => {
     try {
-      // Mark as read and remove from notifications
-      const { error } = await supabase
+      const reason = prompt('يرجى إدخال سبب الرفض:');
+      if (!reason) return;
+
+      // Call rejection RPC
+      const { error: rejectError } = await supabase.rpc('approve_shipment', {
+        shipment_id_param: shipmentId,
+        approval_type: user?.role === 'generator' ? 'generator' : 'recycler',
+        is_approved: false,
+        rejection_reason_param: reason
+      });
+
+      if (rejectError) throw rejectError;
+
+      // Mark notification as read
+      await supabase
         .from('shipment_notifications')
-        .update({ 
-          is_read: true, 
-          read_at: new Date().toISOString() 
-        })
+        .update({ is_read: true, read_at: new Date().toISOString() })
         .eq('id', notificationId);
 
-      if (error) throw error;
-
-      // Remove from local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId));
 
       toast({
@@ -135,7 +144,6 @@ const ShipmentNotifications: React.FC = () => {
         variant: "destructive",
       });
     } catch (error: any) {
-      console.error('Error rejecting notification:', error);
       toast({
         title: "خطأ في الرفض",
         description: error.message,

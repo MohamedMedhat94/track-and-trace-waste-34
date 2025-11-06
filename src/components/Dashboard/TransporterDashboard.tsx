@@ -15,12 +15,20 @@ import {
   Eye,
   MapPin,
   X,
-  Printer
+  Printer,
+  Stamp,
+  Search,
+  Edit
 } from 'lucide-react';
 import ShipmentForm from '@/components/Forms/ShipmentForm';
 import ShipmentsList from '@/components/Lists/ShipmentsList';
 import DriverForm from '@/components/Forms/DriverForm';
 import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
+import ShipmentSearchPanel from '@/components/Filters/ShipmentSearchPanel';
+import ConsolidatedShipmentReport from '@/components/Reports/ConsolidatedShipmentReport';
+import ShipmentNotifications from '@/components/Notifications/ShipmentNotifications';
+import StatusTracker from '@/components/Shipment/StatusTracker';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TransporterDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -40,13 +48,34 @@ const TransporterDashboard: React.FC = () => {
   const [editingShipment, setEditingShipment] = useState(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [myShipments, setMyShipments] = useState<any[]>([]);
+  const [filteredShipments, setFilteredShipments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [selectedShipmentForPrint, setSelectedShipmentForPrint] = useState<any>(null);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showConsolidatedReport, setShowConsolidatedReport] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedShipmentForStatus, setSelectedShipmentForStatus] = useState<any>(null);
+  
+  // Search filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [wasteTypeFilter, setWasteTypeFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState('all');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [wasteTypes, setWasteTypes] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   useEffect(() => {
     fetchTransporterShipments();
+    fetchFilterData();
   }, [user?.companyId]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [myShipments, searchTerm, dateFrom, dateTo, wasteTypeFilter, companyFilter, driverFilter]);
 
   // Real-time updates for shipments
   useEffect(() => {
@@ -145,6 +174,85 @@ const TransporterDashboard: React.FC = () => {
     }
   };
 
+  const fetchFilterData = async () => {
+    try {
+      const { data: wasteData } = await supabase
+        .from('waste_types')
+        .select('id, name')
+        .order('name');
+      
+      const { data: companyData } = await supabase
+        .from('companies')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name');
+
+      const { data: driverData } = await supabase
+        .from('drivers')
+        .select('id, name')
+        .order('name');
+
+      setWasteTypes(wasteData || []);
+      setCompanies(companyData || []);
+      setDrivers(driverData || []);
+    } catch (error) {
+      console.error('خطأ في جلب بيانات الفلاتر:', error);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...myShipments];
+
+    // Search by shipment number
+    if (searchTerm) {
+      filtered = filtered.filter(s => 
+        s.shipment_number?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(s => 
+        new Date(s.created_at) >= new Date(dateFrom)
+      );
+    }
+    if (dateTo) {
+      filtered = filtered.filter(s => 
+        new Date(s.created_at) <= new Date(dateTo)
+      );
+    }
+
+    // Waste type filter
+    if (wasteTypeFilter !== 'all') {
+      filtered = filtered.filter(s => s.waste_type_id === wasteTypeFilter);
+    }
+
+    // Company filter
+    if (companyFilter !== 'all') {
+      filtered = filtered.filter(s => 
+        s.generator_company_id === companyFilter ||
+        s.transporter_company_id === companyFilter ||
+        s.recycler_company_id === companyFilter
+      );
+    }
+
+    // Driver filter
+    if (driverFilter !== 'all') {
+      filtered = filtered.filter(s => s.driver_id === driverFilter);
+    }
+
+    setFilteredShipments(filtered);
+  };
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setDateFrom('');
+    setDateTo('');
+    setWasteTypeFilter('all');
+    setCompanyFilter('all');
+    setDriverFilter('all');
+  };
+
   const quickActions = [
     {
       title: 'إنشاء شحنة',
@@ -159,10 +267,22 @@ const TransporterDashboard: React.FC = () => {
       action: () => setShowDriverForm(true),
     },
     {
-      title: 'عرض الشحنات',
-      description: 'إدارة وتعديل الشحنات',
+      title: 'البحث والتصفية',
+      description: 'بحث متقدم عن الشحنات',
+      icon: Search,
+      action: () => setShowSearchPanel(!showSearchPanel),
+    },
+    {
+      title: 'التقرير المجمع',
+      description: 'طباعة تقرير مجمع للشحنات',
       icon: FileText,
-      action: () => setShowShipmentsList(true),
+      action: () => setShowConsolidatedReport(!showConsolidatedReport),
+    },
+    {
+      title: 'الامضاءات والأختام',
+      description: 'رفع امضاء وختم الشركة',
+      icon: Stamp,
+      action: () => navigate('/company-signatures'),
     },
     {
       title: 'تتبع السائقين',
@@ -216,6 +336,36 @@ const TransporterDashboard: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      {/* Notifications Panel */}
+      <ShipmentNotifications />
+
+      {/* Search Panel */}
+      {showSearchPanel && (
+        <ShipmentSearchPanel
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          wasteTypeFilter={wasteTypeFilter}
+          setWasteTypeFilter={setWasteTypeFilter}
+          companyFilter={companyFilter}
+          setCompanyFilter={setCompanyFilter}
+          driverFilter={driverFilter}
+          setDriverFilter={setDriverFilter}
+          wasteTypes={wasteTypes}
+          companies={companies}
+          drivers={drivers}
+          onReset={resetFilters}
+        />
+      )}
+
+      {/* Consolidated Report */}
+      {showConsolidatedReport && (
+        <ConsolidatedShipmentReport />
+      )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -277,11 +427,11 @@ const TransporterDashboard: React.FC = () => {
         <CardHeader>
           <CardTitle className="font-cairo">الإجراءات السريعة</CardTitle>
           <CardDescription>
-            إدارة الشحنات والسائقين والشركات الشريكة
+            إدارة الشحنات والسائقين والتقارير
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {quickActions.map((action, index) => (
               <Button
                 key={index}
@@ -319,13 +469,15 @@ const TransporterDashboard: React.FC = () => {
             <div className="flex justify-center py-8">
               <div className="text-muted-foreground">جاري تحميل الشحنات...</div>
             </div>
-          ) : myShipments.length === 0 ? (
+          ) : filteredShipments.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-muted-foreground">لا توجد شحنات حتى الآن</div>
+              <div className="text-muted-foreground">
+                {myShipments.length === 0 ? 'لا توجد شحنات حتى الآن' : 'لا توجد شحنات مطابقة للفلاتر المحددة'}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {myShipments.map((shipment) => (
+              {filteredShipments.map((shipment) => (
                 <div
                   key={shipment.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -365,6 +517,19 @@ const TransporterDashboard: React.FC = () => {
                   </div>
                   
                   <div className="flex space-x-2 ml-4">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setSelectedShipmentForStatus(shipment);
+                        setShowStatusModal(true);
+                      }}
+                      title="تغيير الحالة"
+                      className="hover:bg-accent/10"
+                    >
+                      <Edit className="h-4 w-4 ml-1" />
+                      <span className="text-xs">تغيير الحالة</span>
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 

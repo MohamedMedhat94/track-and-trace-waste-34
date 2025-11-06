@@ -142,23 +142,31 @@ const DriverForm: React.FC<DriverFormProps> = ({ onClose, editingDriver }) => {
           // Prepare userData without password field
           const { password: _, ...driverData } = formData;
           
-          const { data: createUserData, error: createUserError } = await supabase.functions.invoke('create-user-with-password', {
-            body: {
-              email: formData.email,
-              password: formData.password,
-              userData: driverData,
-              userType: 'driver'
+          // Create user account first
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+            options: {
+              data: {
+                role: 'driver',
+                full_name: formData.name
+              }
             }
           });
 
-          if (createUserError) {
-            console.error('Edge function error:', createUserError);
-            throw createUserError;
-          }
-          if (createUserData?.error) {
-            console.error('Edge function returned error:', createUserData.error);
-            throw new Error(createUserData.error);
-          }
+          if (authError) throw authError;
+          if (!authData.user) throw new Error('فشل إنشاء حساب المستخدم');
+
+          // Create driver record
+          const { error: driverError } = await supabase
+            .from('drivers')
+            .insert({
+              ...driverData,
+              user_id: authData.user.id,
+              email: formData.email
+            });
+
+          if (driverError) throw driverError;
 
           toast({
             title: "تم إنشاء السائق بنجاح",
