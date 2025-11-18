@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import ShipmentNotifications from '@/components/Notifications/ShipmentNotifications';
 import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
+import ShipmentReportForm from '@/components/Shipment/ShipmentReportForm';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const RecyclerDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -36,6 +38,8 @@ const RecyclerDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const [selectedShipmentForPrint, setSelectedShipmentForPrint] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedShipmentForReport, setSelectedShipmentForReport] = useState<any>(null);
 
   useEffect(() => {
     fetchReceivedShipments();
@@ -406,6 +410,19 @@ const RecyclerDashboard: React.FC = () => {
                         variant="outline" 
                         size="sm"
                         onClick={() => {
+                          setSelectedShipmentForReport(shipment);
+                          setShowReportModal(true);
+                        }}
+                        title="كتابة التقرير"
+                        className="hover:bg-primary/10"
+                      >
+                        <FileText className="h-4 w-4 ml-1" />
+                        <span className="text-xs">التقرير</span>
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
                           setSelectedShipmentForPrint(shipment);
                           setShowPrintModal(true);
                         }}
@@ -492,6 +509,31 @@ const RecyclerDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-xl font-cairo">
+              <FileText className="h-5 w-5 ml-2" />
+              تقرير الشحنة رقم {selectedShipmentForReport?.shipment_number}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedShipmentForReport && (
+            <ShipmentReportForm
+              shipmentId={selectedShipmentForReport.id}
+              shipmentNumber={selectedShipmentForReport.shipment_number}
+              currentReport={selectedShipmentForReport.shipment_report}
+              reportCreatedBy={selectedShipmentForReport.report_created_by}
+              reportCreatedAt={selectedShipmentForReport.report_created_at}
+              onReportAdded={() => {
+                setShowReportModal(false);
+                fetchReceivedShipments();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

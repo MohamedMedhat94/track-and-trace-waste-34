@@ -30,6 +30,9 @@ interface ShipmentData {
   pickup_location?: string;
   delivery_location?: string;
   created_at: string;
+  shipment_report?: string;
+  report_created_at?: string;
+  report_created_by?: string;
   generator_company?: Company;
   transporter_company?: Company;
   recycler_company?: Company;
@@ -328,6 +331,22 @@ const ShipmentPDFViewer: React.FC<ShipmentPDFViewerProps> = ({
                   <span class="info-label">اسم السائق:</span>
                   <span class="info-value">${driverName}</span>
                 </div>
+              </div>
+            ` : ''}
+
+            ${shipment.shipment_report ? `
+              <div class="section" style="background: #f0f9ff; border-right: 4px solid #0284c7; padding: 15px;">
+                <div class="section-title" style="color: #0284c7; margin-bottom: 10px;">
+                  تقرير الشحنة
+                </div>
+                <div style="white-space: pre-wrap; line-height: 1.8; color: #1e293b;">
+                  ${shipment.shipment_report}
+                </div>
+                ${shipment.report_created_at ? `
+                  <div style="margin-top: 10px; font-size: 12px; color: #64748b; border-top: 1px solid #cbd5e1; padding-top: 8px;">
+                    تم إنشاء التقرير في: ${new Date(shipment.report_created_at).toLocaleString('ar-SA')}
+                  </div>
+                ` : ''}
               </div>
             ` : ''}
 

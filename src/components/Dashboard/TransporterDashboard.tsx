@@ -28,6 +28,7 @@ import ShipmentSearchPanel from '@/components/Filters/ShipmentSearchPanel';
 import ConsolidatedShipmentReport from '@/components/Reports/ConsolidatedShipmentReport';
 import ShipmentNotifications from '@/components/Notifications/ShipmentNotifications';
 import StatusTracker from '@/components/Shipment/StatusTracker';
+import ShipmentReportForm from '@/components/Shipment/ShipmentReportForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TransporterDashboard: React.FC = () => {
@@ -56,6 +57,8 @@ const TransporterDashboard: React.FC = () => {
   const [showConsolidatedReport, setShowConsolidatedReport] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedShipmentForStatus, setSelectedShipmentForStatus] = useState<any>(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedShipmentForReport, setSelectedShipmentForReport] = useState<any>(null);
   
   // Search filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -654,6 +657,50 @@ const TransporterDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Status Change Modal */}
+      <Dialog open={showStatusModal} onOpenChange={setShowStatusModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>تغيير حالة الشحنة</DialogTitle>
+          </DialogHeader>
+          {selectedShipmentForStatus && (
+            <StatusTracker
+              shipmentId={selectedShipmentForStatus.id}
+              currentStatus={selectedShipmentForStatus.status}
+              onStatusUpdate={() => {
+                setShowStatusModal(false);
+                fetchTransporterShipments();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Modal */}
+      <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-xl font-cairo">
+              <FileText className="h-5 w-5 ml-2" />
+              تقرير الشحنة رقم {selectedShipmentForReport?.shipment_number}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedShipmentForReport && (
+            <ShipmentReportForm
+              shipmentId={selectedShipmentForReport.id}
+              shipmentNumber={selectedShipmentForReport.shipment_number}
+              currentReport={selectedShipmentForReport.shipment_report}
+              reportCreatedBy={selectedShipmentForReport.report_created_by}
+              reportCreatedAt={selectedShipmentForReport.report_created_at}
+              onReportAdded={() => {
+                setShowReportModal(false);
+                fetchTransporterShipments();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -298,7 +298,7 @@ const GeneratorDashboard: React.FC = () => {
                        </div>
                      </div>
                     
-                    <div className="flex items-center justify-between mt-2">
+                     <div className="flex items-center justify-between mt-2">
                       <span className="text-sm text-muted-foreground">
                         الكمية: <span className="font-medium">{shipment.quantity} كجم</span>
                       </span>
@@ -306,6 +306,23 @@ const GeneratorDashboard: React.FC = () => {
                         تاريخ الإنشاء: {new Date(shipment.created_at).toLocaleDateString('ar-EG')}
                       </span>
                     </div>
+
+                    {shipment.shipment_report && (
+                      <div className="mt-3 p-3 bg-primary/10 rounded-lg border border-primary/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-semibold text-primary">تقرير الشحنة</span>
+                        </div>
+                        <p className="text-sm text-foreground/80 whitespace-pre-wrap line-clamp-3">
+                          {shipment.shipment_report}
+                        </p>
+                        {shipment.report_created_at && (
+                          <span className="text-xs text-muted-foreground mt-2 block">
+                            تم الإنشاء: {new Date(shipment.report_created_at).toLocaleDateString('ar-SA')}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                   
                   <div className="flex space-x-2 space-x-reverse ml-4">
