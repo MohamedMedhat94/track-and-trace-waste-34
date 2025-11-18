@@ -13,16 +13,22 @@ import {
   Truck,
   Clock,
   CheckCircle,
-  Building2
+  Building2,
+  Search,
+  Filter,
+  X
 } from 'lucide-react';
 import PDFGenerator from '@/components/PDF/PDFGenerator';
 import ShipmentNotifications from '@/components/Notifications/ShipmentNotifications';
+import ShipmentSearchPanel from '@/components/Filters/ShipmentSearchPanel';
+import ConsolidatedShipmentReport from '@/components/Reports/ConsolidatedShipmentReport';
 
 const GeneratorDashboard: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [shipments, setShipments] = useState<any[]>([]);
+  const [filteredShipments, setFilteredShipments] = useState<any[]>([]);
   const [stats, setStats] = useState({
     totalShipments: 0,
     activeShipments: 0,
@@ -30,10 +36,28 @@ const GeneratorDashboard: React.FC = () => {
     totalWasteProcessed: '0 kg'
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [showSearchPanel, setShowSearchPanel] = useState(false);
+  const [showConsolidatedReport, setShowConsolidatedReport] = useState(false);
+  
+  // Search filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [wasteTypeFilter, setWasteTypeFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState('all');
+  const [driverFilter, setDriverFilter] = useState('all');
+  const [wasteTypes, setWasteTypes] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
 
   useEffect(() => {
     fetchMyShipments();
+    fetchFilterData();
   }, [user?.companyId]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [shipments, searchTerm, dateFrom, dateTo, wasteTypeFilter, companyFilter, driverFilter]);
 
   // Real-time updates for shipments
   useEffect(() => {
@@ -135,6 +159,80 @@ const GeneratorDashboard: React.FC = () => {
     }
   };
 
+  const fetchFilterData = async () => {
+    try {
+      const { data: wasteTypesData } = await supabase
+        .from('waste_types')
+        .select('*')
+        .order('name');
+      
+      const { data: companiesData } = await supabase
+        .rpc('get_companies_for_selection');
+      
+      const { data: driversData } = await supabase
+        .rpc('get_drivers_for_selection');
+
+      setWasteTypes(wasteTypesData || []);
+      setCompanies(companiesData || []);
+      setDrivers(driversData || []);
+    } catch (error) {
+      console.error('خطأ في جلب بيانات الفلاتر:', error);
+    }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...shipments];
+
+    // Search by shipment number
+    if (searchTerm) {
+      filtered = filtered.filter(s => 
+        s.shipment_number?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Date range filter
+    if (dateFrom) {
+      filtered = filtered.filter(s => 
+        new Date(s.created_at) >= new Date(dateFrom)
+      );
+    }
+    if (dateTo) {
+      filtered = filtered.filter(s => 
+        new Date(s.created_at) <= new Date(dateTo)
+      );
+    }
+
+    // Waste type filter
+    if (wasteTypeFilter !== 'all') {
+      filtered = filtered.filter(s => s.waste_type_id === wasteTypeFilter);
+    }
+
+    // Company filter
+    if (companyFilter !== 'all') {
+      filtered = filtered.filter(s => 
+        s.generator_company_id === companyFilter ||
+        s.transporter_company_id === companyFilter ||
+        s.recycler_company_id === companyFilter
+      );
+    }
+
+    // Driver filter
+    if (driverFilter !== 'all') {
+      filtered = filtered.filter(s => s.driver_id === driverFilter);
+    }
+
+    setFilteredShipments(filtered);
+  };
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setDateFrom('');
+    setDateTo('');
+    setWasteTypeFilter('all');
+    setCompanyFilter('all');
+    setDriverFilter('all');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending': return 'bg-warning text-warning-foreground';
@@ -177,13 +275,32 @@ const GeneratorDashboard: React.FC = () => {
             مرحباً بعودتك، {user?.name} - {user?.companyName}
           </p>
         </div>
-        <Button 
-          onClick={() => navigate('/company-dashboard')}
-          className="flex items-center gap-2"
-        >
-          <Building2 className="h-4 w-4" />
-          عرض شحنات الشركة
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setShowSearchPanel(!showSearchPanel)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Search className="h-4 w-4" />
+            بحث متقدم
+          </Button>
+          <Button 
+            onClick={() => setShowConsolidatedReport(!showConsolidatedReport)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            تقرير مجمع
+          </Button>
+          <Button 
+            onClick={() => navigate('/company-profile')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Building2 className="h-4 w-4" />
+            بيانات الشركة
+          </Button>
+        </div>
       </div>
 
       {/* Notifications Panel */}
@@ -263,13 +380,17 @@ const GeneratorDashboard: React.FC = () => {
             <div className="flex justify-center py-8">
               <div className="text-muted-foreground">جاري تحميل الشحنات...</div>
             </div>
-          ) : shipments.length === 0 ? (
+          ) : filteredShipments.length === 0 ? (
             <div className="text-center py-8">
-              <div className="text-muted-foreground">لا توجد شحنات حتى الآن</div>
+              <div className="text-muted-foreground">
+                {searchTerm || dateFrom || dateTo || wasteTypeFilter !== 'all' || companyFilter !== 'all' || driverFilter !== 'all'
+                  ? 'لا توجد نتائج للبحث'
+                  : 'لا توجد شحنات حتى الآن'}
+              </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {shipments.map((shipment) => (
+              {filteredShipments.map((shipment) => (
                 <div
                   key={shipment.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -372,6 +493,47 @@ const GeneratorDashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Search Panel */}
+      {showSearchPanel && (
+        <ShipmentSearchPanel
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          dateFrom={dateFrom}
+          setDateFrom={setDateFrom}
+          dateTo={dateTo}
+          setDateTo={setDateTo}
+          wasteTypeFilter={wasteTypeFilter}
+          setWasteTypeFilter={setWasteTypeFilter}
+          companyFilter={companyFilter}
+          setCompanyFilter={setCompanyFilter}
+          driverFilter={driverFilter}
+          setDriverFilter={setDriverFilter}
+          wasteTypes={wasteTypes}
+          companies={companies}
+          drivers={drivers}
+          onReset={resetFilters}
+        />
+      )}
+
+      {/* Consolidated Report */}
+      {showConsolidatedReport && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="max-w-4xl w-full max-h-[90vh] overflow-auto bg-background rounded-lg">
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 left-4 z-10"
+                onClick={() => setShowConsolidatedReport(false)}
+              >
+                <X className="h-6 w-6" />
+              </Button>
+              <ConsolidatedShipmentReport />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

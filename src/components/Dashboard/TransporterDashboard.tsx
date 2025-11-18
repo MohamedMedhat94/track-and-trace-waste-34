@@ -55,10 +55,10 @@ const TransporterDashboard: React.FC = () => {
   const [selectedShipmentForPrint, setSelectedShipmentForPrint] = useState<any>(null);
   const [showSearchPanel, setShowSearchPanel] = useState(false);
   const [showConsolidatedReport, setShowConsolidatedReport] = useState(false);
-  const [showStatusModal, setShowStatusModal] = useState(false);
-  const [selectedShipmentForStatus, setSelectedShipmentForStatus] = useState<any>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedShipmentForReport, setSelectedShipmentForReport] = useState<any>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedShipmentForStatus, setSelectedShipmentForStatus] = useState<any>(null);
   
   // Search filters
   const [searchTerm, setSearchTerm] = useState('');
