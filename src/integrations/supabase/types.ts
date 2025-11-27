@@ -59,6 +59,7 @@ export type Database = {
           facility_reg_no: string | null
           fax: string | null
           id: string
+          industrial_registry: string | null
           is_active: boolean | null
           license_no: string | null
           location_address: string | null
@@ -70,10 +71,12 @@ export type Database = {
           registered_activity: string | null
           signup_timestamp: string | null
           status: string | null
+          tax_card_no: string | null
           tax_id: string | null
           type: string
           union_membership_no: string | null
           updated_at: string
+          waste_license_no: string | null
         }
         Insert: {
           address?: string | null
@@ -89,6 +92,7 @@ export type Database = {
           facility_reg_no?: string | null
           fax?: string | null
           id?: string
+          industrial_registry?: string | null
           is_active?: boolean | null
           license_no?: string | null
           location_address?: string | null
@@ -100,10 +104,12 @@ export type Database = {
           registered_activity?: string | null
           signup_timestamp?: string | null
           status?: string | null
+          tax_card_no?: string | null
           tax_id?: string | null
           type: string
           union_membership_no?: string | null
           updated_at?: string
+          waste_license_no?: string | null
         }
         Update: {
           address?: string | null
@@ -119,6 +125,7 @@ export type Database = {
           facility_reg_no?: string | null
           fax?: string | null
           id?: string
+          industrial_registry?: string | null
           is_active?: boolean | null
           license_no?: string | null
           location_address?: string | null
@@ -130,10 +137,12 @@ export type Database = {
           registered_activity?: string | null
           signup_timestamp?: string | null
           status?: string | null
+          tax_card_no?: string | null
           tax_id?: string | null
           type?: string
           union_membership_no?: string | null
           updated_at?: string
+          waste_license_no?: string | null
         }
         Relationships: []
       }

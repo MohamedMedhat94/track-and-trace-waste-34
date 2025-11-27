@@ -109,10 +109,58 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
   }
 
   body {
     @apply bg-background text-foreground font-cairo;
+    direction: rtl;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  /* تحسين العرض على الهواتف */
+  @media (max-width: 768px) {
+    body {
+      font-size: 14px;
+    }
+    
+    h1 {
+      font-size: 1.5rem !important;
+    }
+    
+    h2 {
+      font-size: 1.25rem !important;
+    }
+    
+    h3 {
+      font-size: 1.1rem !important;
+    }
+    
+    /* تحسين الأزرار على الهواتف */
+    button {
+      min-height: 44px;
+      padding: 0.75rem 1rem;
+    }
+    
+    /* تحسين الحقول على الهواتف */
+    input, select, textarea {
+      font-size: 16px !important; /* يمنع zoom على iOS */
+      min-height: 44px;
+    }
+    
+    /* تحسين الجداول على الهواتف */
+    table {
+      font-size: 0.875rem;
+    }
+    
+    /* تحسين الكروت على الهواتف */
+    .container {
+      padding-left: 1rem !important;
+      padding-right: 1rem !important;
+    }
   }
 }
 

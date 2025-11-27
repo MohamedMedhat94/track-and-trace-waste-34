@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Download, Printer, FileText } from 'lucide-react';
 import { useButtonValidation } from '@/hooks/useButtonValidation';
+import { supabase } from '@/integrations/supabase/client';
 
 interface Company {
   id: string;
@@ -50,6 +51,49 @@ const ShipmentPDFViewer: React.FC<ShipmentPDFViewerProps> = ({
 }) => {
   const printRef = useRef<HTMLDivElement>(null);
   const { validateAndExecute } = useButtonValidation();
+  const [signatures, setSignatures] = React.useState<{
+    generator: { signature?: string; stamp?: string };
+    transporter: { signature?: string; stamp?: string };
+    recycler: { signature?: string; stamp?: string };
+  }>({
+    generator: {},
+    transporter: {},
+    recycler: {}
+  });
+
+  React.useEffect(() => {
+    fetchSignatures();
+  }, [shipment.id]);
+
+  const fetchSignatures = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_shipment_with_signatures', {
+        shipment_id_param: shipment.id
+      });
+
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        const result = data[0];
+        setSignatures({
+          generator: {
+            signature: result.generator_signature,
+            stamp: result.generator_stamp
+          },
+          transporter: {
+            signature: result.transporter_signature,
+            stamp: result.transporter_stamp
+          },
+          recycler: {
+            signature: result.recycler_signature,
+            stamp: result.recycler_stamp
+          }
+        });
+      }
+    } catch (error) {
+      console.error('خطأ في جلب التوقيعات:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -347,6 +391,35 @@ const ShipmentPDFViewer: React.FC<ShipmentPDFViewerProps> = ({
                     تم إنشاء التقرير في: ${new Date(shipment.report_created_at).toLocaleString('ar-SA')}
                   </div>
                 ` : ''}
+              </div>
+            ` : ''}
+
+            ${signatures.generator.signature || signatures.generator.stamp || signatures.transporter.signature || signatures.transporter.stamp || signatures.recycler.signature || signatures.recycler.stamp ? `
+              <div class="section">
+                <div class="section-title">التوقيعات والأختام</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-top: 15px;">
+                  ${signatures.generator.signature || signatures.generator.stamp ? `
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; text-align: center;">
+                      <div style="font-weight: 700; color: #1f2937; margin-bottom: 10px;">الجهة المولدة</div>
+                      ${signatures.generator.signature ? `<img src="${signatures.generator.signature}" style="max-width: 150px; max-height: 80px; margin: 5px auto; display: block;" alt="توقيع الجهة المولدة" />` : ''}
+                      ${signatures.generator.stamp ? `<img src="${signatures.generator.stamp}" style="max-width: 150px; max-height: 80px; margin: 5px auto; display: block;" alt="ختم الجهة المولدة" />` : ''}
+                    </div>
+                  ` : ''}
+                  ${signatures.transporter.signature || signatures.transporter.stamp ? `
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; text-align: center;">
+                      <div style="font-weight: 700; color: #1f2937; margin-bottom: 10px;">شركة النقل</div>
+                      ${signatures.transporter.signature ? `<img src="${signatures.transporter.signature}" style="max-width: 150px; max-height: 80px; margin: 5px auto; display: block;" alt="توقيع شركة النقل" />` : ''}
+                      ${signatures.transporter.stamp ? `<img src="${signatures.transporter.stamp}" style="max-width: 150px; max-height: 80px; margin: 5px auto; display: block;" alt="ختم شركة النقل" />` : ''}
+                    </div>
+                  ` : ''}
+                  ${signatures.recycler.signature || signatures.recycler.stamp ? `
+                    <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; text-align: center;">
+                      <div style="font-weight: 700; color: #1f2937; margin-bottom: 10px;">شركة التدوير</div>
+                      ${signatures.recycler.signature ? `<img src="${signatures.recycler.signature}" style="max-width: 150px; max-height: 80px; margin: 5px auto; display: block;" alt="توقيع شركة التدوير" />` : ''}
+                      ${signatures.recycler.stamp ? `<img src="${signatures.recycler.stamp}" style="max-width: 150px; max-height: 80px; margin: 5px auto; display: block;" alt="ختم شركة التدوير" />` : ''}
+                    </div>
+                  ` : ''}
+                </div>
               </div>
             ` : ''}
 

@@ -8,20 +8,20 @@ const CompanySignatures: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-muted/20 p-4">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-muted/20 p-2 sm:p-4">
+      <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div>
-            <h1 className="text-3xl font-bold font-cairo">إدارة الامضاءات والأختام</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold font-cairo">إدارة الامضاءات والأختام</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               رفع وإدارة الامضاء والختم الرسمي لشركتك
             </p>
           </div>
           <Button
             variant="outline"
             onClick={() => navigate(-1)}
-            className="flex items-center font-cairo"
+            className="flex items-center font-cairo w-full sm:w-auto"
           >
             <ArrowLeft className="h-4 w-4 ml-2" />
             العودة
