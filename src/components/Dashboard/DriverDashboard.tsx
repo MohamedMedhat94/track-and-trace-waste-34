@@ -72,11 +72,41 @@ const DriverDashboard: React.FC = () => {
   }, [user?.id]);
 
   const fetchDriverShipments = async () => {
+    if (!user?.id) {
+      console.log('لا يوجد مستخدم مسجل');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
+      
+      // Get driver info first to check if user is linked to a driver
+      const { data: driverData, error: driverError } = await supabase
+        .from('drivers')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (driverError) {
+        console.error('خطأ في جلب بيانات السائق:', driverError);
+        throw new Error('فشل في الاتصال بقاعدة البيانات');
+      }
+
+      if (!driverData) {
+        console.log('لم يتم ربط المستخدم بحساب سائق');
+        setMyDeliveries([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch shipments for this driver
       const { data, error } = await supabase.rpc('get_driver_shipments');
       
-      if (error) throw error;
+      if (error) {
+        console.error('خطأ في RPC get_driver_shipments:', error);
+        throw new Error(error.message || 'فشل في جلب الشحنات');
+      }
       
       const transformedData = (data || []).map(shipment => ({
         id: shipment.shipment_number,
@@ -93,13 +123,15 @@ const DriverDashboard: React.FC = () => {
       }));
       
       setMyDeliveries(transformedData);
+      console.log(`تم جلب ${transformedData.length} شحنة بنجاح`);
     } catch (error: any) {
       console.error('خطأ في جلب شحنات السائق:', error);
       toast({
         title: "خطأ في جلب الشحنات",
-        description: error.message || "حدث خطأ غير متوقع",
+        description: error.message || "تحقق من اتصال الإنترنت وحاول مرة أخرى",
         variant: "destructive",
       });
+      setMyDeliveries([]);
     } finally {
       setIsLoading(false);
     }
@@ -163,25 +195,31 @@ const DriverDashboard: React.FC = () => {
     }
 
     try {
+      console.log('محاولة بدء التسليم للشحنة:', shipmentId);
+      
       const { error } = await supabase.rpc('update_shipment_status', {
         shipment_id_param: actualShipmentId,
         new_status_param: 'in_transit',
         notes_param: 'بدء النقل من قبل السائق'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('خطأ RPC في تحديث الحالة:', error);
+        throw new Error(error.message || 'فشل في تحديث حالة الشحنة');
+      }
 
       toast({
         title: "تم بدء التسليم",
-        description: `تم بدء التسليم للشحنة ${shipmentId}`,
+        description: `تم بدء التسليم للشحنة ${shipmentId} بنجاح`,
       });
       
-      fetchDriverShipments();
+      // Refresh shipments list
+      setTimeout(() => fetchDriverShipments(), 500);
     } catch (error: any) {
       console.error('خطأ في بدء التسليم:', error);
       toast({
-        title: "خطأ",
-        description: error.message || "فشل في بدء التسليم",
+        title: "خطأ في تنفيذ العملية",
+        description: error.message || "تحقق من الاتصال وحاول مرة أخرى",
         variant: "destructive",
       });
     }
@@ -189,25 +227,31 @@ const DriverDashboard: React.FC = () => {
 
   const handleEndDelivery = async (shipmentId: string, actualShipmentId: string) => {
     try {
+      console.log('محاولة إكمال التسليم للشحنة:', shipmentId);
+      
       const { error } = await supabase.rpc('update_shipment_status', {
         shipment_id_param: actualShipmentId,
-        new_status_param: 'delivery',
+        new_status_param: 'delivered',
         notes_param: 'إكمال التسليم من قبل السائق'
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('خطأ RPC في تحديث الحالة:', error);
+        throw new Error(error.message || 'فشل في تحديث حالة الشحنة');
+      }
 
       toast({
         title: "تم إكمال التسليم",
-        description: `تم إكمال التسليم للشحنة ${shipmentId}`,
+        description: `تم إكمال التسليم للشحنة ${shipmentId} بنجاح`,
       });
       
-      fetchDriverShipments();
+      // Refresh shipments list
+      setTimeout(() => fetchDriverShipments(), 500);
     } catch (error: any) {
       console.error('خطأ في إكمال التسليم:', error);
       toast({
-        title: "خطأ",
-        description: error.message || "فشل في إكمال التسليم",
+        title: "خطأ في تنفيذ العملية",
+        description: error.message || "تحقق من الاتصال وحاول مرة أخرى",
         variant: "destructive",
       });
     }
