@@ -240,17 +240,39 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signOut = async () => {
-    // Log logout before signing out
-    if (session?.user) {
-      await supabase.rpc('log_auth_event', {
-        user_id_param: session.user.id,
-        email_param: session.user.email,
-        action_param: 'logout'
-      });
+    try {
+      // Log logout in background (non-blocking)
+      if (session?.user) {
+        setTimeout(async () => {
+          try {
+            await supabase.rpc('log_auth_event', {
+              user_id_param: session.user.id,
+              email_param: session.user.email || '',
+              action_param: 'logout'
+            });
+          } catch (logError) {
+            console.error('Log error:', logError);
+          }
+        }, 0);
+      }
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      // Clear local state regardless of Supabase response
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      
+      return { error: null };
+    } catch (error: any) {
+      console.error('Sign out error:', error);
+      // Clear local state even on error
+      setUser(null);
+      setProfile(null);
+      setSession(null);
+      return { error: null };
     }
-    
-    const { error } = await supabase.auth.signOut();
-    return { error };
   };
 
   const isAuthenticated = !!session?.user || !!user;
