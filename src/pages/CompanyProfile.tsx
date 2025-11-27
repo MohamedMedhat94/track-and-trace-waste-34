@@ -119,32 +119,32 @@ const CompanyProfile: React.FC = () => {
   const canEdit = profile?.role === 'admin';
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto p-2 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       {/* Header */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="p-4 sm:p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
             <div className="flex items-center space-x-3 space-x-reverse">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Building2 className="h-6 w-6 text-primary" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <Building2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-2xl font-cairo">بيانات الشركة</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
+                <CardTitle className="text-xl sm:text-2xl font-cairo">بيانات الشركة</CardTitle>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                   {getCompanyTypeLabel(company.type)}
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               {canEdit && !isEditing && (
-                <Button onClick={() => setIsEditing(true)} variant="outline">
+                <Button onClick={() => setIsEditing(true)} variant="outline" className="flex-1 sm:flex-none">
                   <Edit className="h-4 w-4 ml-2" />
                   تعديل
                 </Button>
               )}
               {isEditing && (
                 <>
-                  <Button onClick={handleSave} disabled={saving}>
+                  <Button onClick={handleSave} disabled={saving} className="flex-1 sm:flex-none">
                     <Save className="h-4 w-4 ml-2" />
                     حفظ
                   </Button>
@@ -154,13 +154,14 @@ const CompanyProfile: React.FC = () => {
                       fetchCompanyData();
                     }}
                     variant="outline"
+                    className="flex-1 sm:flex-none"
                   >
                     <X className="h-4 w-4 ml-2" />
                     إلغاء
                   </Button>
                 </>
               )}
-              <Button onClick={() => navigate(-1)} variant="ghost">
+              <Button onClick={() => navigate(-1)} variant="ghost" className="hidden sm:flex">
                 العودة
               </Button>
             </div>
@@ -198,6 +199,7 @@ const CompanyProfile: React.FC = () => {
                 value={company.email || ''}
                 onChange={(e) => setCompany({ ...company, email: e.target.value })}
                 disabled={!isEditing}
+                className="text-right"
               />
             </div>
 
@@ -295,6 +297,33 @@ const CompanyProfile: React.FC = () => {
                 </div>
               </>
             )}
+
+            <div className="space-y-2">
+              <Label>رقم البطاقة الضريبية</Label>
+              <Input
+                value={company.tax_card_no || ''}
+                onChange={(e) => setCompany({ ...company, tax_card_no: e.target.value })}
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>السجل الصناعي</Label>
+              <Input
+                value={company.industrial_registry || ''}
+                onChange={(e) => setCompany({ ...company, industrial_registry: e.target.value })}
+                disabled={!isEditing}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>رقم ترخيص جهاز المخلفات</Label>
+              <Input
+                value={company.waste_license_no || ''}
+                onChange={(e) => setCompany({ ...company, waste_license_no: e.target.value })}
+                disabled={!isEditing}
+              />
+            </div>
 
             {company.union_membership_no && (
               <div className="space-y-2">
