@@ -29,6 +29,7 @@ import ConsolidatedShipmentReport from '@/components/Reports/ConsolidatedShipmen
 import ShipmentNotifications from '@/components/Notifications/ShipmentNotifications';
 import StatusTracker from '@/components/Shipment/StatusTracker';
 import ShipmentReportForm from '@/components/Shipment/ShipmentReportForm';
+import CompanyRegistrationForm from '@/components/Forms/CompanyRegistrationForm';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 const TransporterDashboard: React.FC = () => {
@@ -140,7 +141,7 @@ const TransporterDashboard: React.FC = () => {
 
       console.log('TransporterDashboard: Fetching shipments for company_id:', user?.companyId);
       
-      const { data, error } = await supabase
+      const { data: rpcData, error } = await supabase
         .rpc('get_company_shipments', { company_type: 'transporter' });
 
       if (error) {
@@ -148,12 +149,31 @@ const TransporterDashboard: React.FC = () => {
         throw error;
       }
 
-      console.log('TransporterDashboard: Received data:', data);
-      setMyShipments(data || []);
+      // Fetch additional shipment details including report
+      if (rpcData && rpcData.length > 0) {
+        const shipmentIds = rpcData.map((s: any) => s.id);
+        const { data: detailedData, error: detailError } = await supabase
+          .from('shipments')
+          .select('id, shipment_report, report_created_at, report_created_by')
+          .in('id', shipmentIds);
+
+        if (!detailError && detailedData) {
+          const enrichedData = rpcData.map((shipment: any) => {
+            const details = detailedData.find((d: any) => d.id === shipment.id);
+            return { ...shipment, ...details };
+          });
+          console.log('TransporterDashboard: Enriched data:', enrichedData);
+          setMyShipments(enrichedData || []);
+        } else {
+          setMyShipments(rpcData || []);
+        }
+      } else {
+        setMyShipments(rpcData || []);
+      }
       
       // Update stats based on real data
-      const total = data?.length || 0;
-      const active = data?.filter((s: any) => ['pending', 'in_transit', 'processing'].includes(s.status)).length || 0;
+      const total = rpcData?.length || 0;
+      const active = rpcData?.filter((s: any) => ['pending', 'in_transit', 'processing'].includes(s.status)).length || 0;
       
       setStats(prev => ({
         ...prev,
@@ -256,12 +276,20 @@ const TransporterDashboard: React.FC = () => {
     setDriverFilter('all');
   };
 
+  const [showCompanyRegistration, setShowCompanyRegistration] = useState(false);
+
   const quickActions = [
     {
       title: 'إنشاء شحنة',
       description: 'بدء شحنة نفايات جديدة',
       icon: PlusCircle,
       action: () => setShowShipmentForm(true),
+    },
+    {
+      title: 'تسجيل شركة',
+      description: 'تسجيل شركة مولدة أو مدورة',
+      icon: Building2,
+      action: () => setShowCompanyRegistration(true),
     },
     {
       title: 'إدارة السائقين',
@@ -486,11 +514,17 @@ const TransporterDashboard: React.FC = () => {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
+                    <div className="flex items-center space-x-3 space-x-reverse mb-2">
                       <span className="font-semibold text-lg">{shipment.shipment_number}</span>
                       <Badge className={getStatusColor(shipment.status)}>
                         {getStatusText(shipment.status)}
                       </Badge>
+                      {shipment.shipment_report && (
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
+                          <FileText className="h-3 w-3 ml-1" />
+                          تقرير
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
@@ -681,17 +715,13 @@ const TransporterDashboard: React.FC = () => {
       <Dialog open={showReportModal} onOpenChange={setShowReportModal}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center text-xl font-cairo">
-              <FileText className="h-5 w-5 ml-2" />
-              تقرير الشحنة رقم {selectedShipmentForReport?.shipment_number}
-            </DialogTitle>
+            <DialogTitle className="font-cairo">تقرير الشحنة</DialogTitle>
           </DialogHeader>
           {selectedShipmentForReport && (
             <ShipmentReportForm
               shipmentId={selectedShipmentForReport.id}
               shipmentNumber={selectedShipmentForReport.shipment_number}
               currentReport={selectedShipmentForReport.shipment_report}
-              reportCreatedBy={selectedShipmentForReport.report_created_by}
               reportCreatedAt={selectedShipmentForReport.report_created_at}
               onReportAdded={() => {
                 setShowReportModal(false);
@@ -699,6 +729,22 @@ const TransporterDashboard: React.FC = () => {
               }}
             />
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Company Registration Modal */}
+      <Dialog open={showCompanyRegistration} onOpenChange={setShowCompanyRegistration}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <CompanyRegistrationForm
+            onClose={() => setShowCompanyRegistration(false)}
+            onSuccess={() => {
+              setShowCompanyRegistration(false);
+              toast({
+                title: "تم التسجيل بنجاح",
+                description: "سيتم مراجعة طلب التسجيل من الإدارة",
+              });
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>

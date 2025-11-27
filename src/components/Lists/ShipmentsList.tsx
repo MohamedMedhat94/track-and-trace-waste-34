@@ -13,7 +13,8 @@ import {
   Printer,
   MapPin,
   Calendar,
-  Package
+  Package,
+  FileText
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -62,6 +63,8 @@ const ShipmentsList: React.FC<ShipmentsListProps> = ({ onEdit, onView, refreshTr
           waste_description,
           pickup_location,
           delivery_location,
+          shipment_report,
+          report_created_at,
           generator_company:companies!shipments_generator_company_id_fkey(name),
           transporter_company:companies!shipments_transporter_company_id_fkey(name),
           recycler_company:companies!shipments_recycler_company_id_fkey(name),
@@ -284,7 +287,7 @@ const ShipmentsList: React.FC<ShipmentsListProps> = ({ onEdit, onView, refreshTr
                 className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
               >
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3 space-x-reverse mb-2">
+                    <div className="flex items-center space-x-3 space-x-reverse mb-2">
                     <span className="font-semibold text-lg">{shipment.shipment_number}</span>
                     <Badge className={getStatusColor(shipment.status)}>
                       {getStatusText(shipment.status)}
@@ -292,6 +295,12 @@ const ShipmentsList: React.FC<ShipmentsListProps> = ({ onEdit, onView, refreshTr
                     {shipment.quantity && (
                       <Badge variant="outline">
                         {shipment.quantity} كغ
+                      </Badge>
+                    )}
+                    {shipment.shipment_report && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <FileText className="h-3 w-3 ml-1" />
+                        تم كتابة التقرير
                       </Badge>
                     )}
                   </div>
