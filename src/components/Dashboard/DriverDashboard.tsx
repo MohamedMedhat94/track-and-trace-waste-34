@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import DriverLocationRegister from '@/components/Driver/DriverLocationRegister';
 import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
+import DriverShipmentForm from '@/components/Forms/DriverShipmentForm';
 import { 
   MapPin,
   Clock,
@@ -27,6 +29,7 @@ const DriverDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [locationSharing, setLocationSharing] = useState(false);
   const [selectedShipmentForPrint, setSelectedShipmentForPrint] = useState<any>(null);
+  const [showShipmentForm, setShowShipmentForm] = useState(false);
 
   const stats = {
     totalDeliveries: 89,
@@ -266,12 +269,12 @@ const DriverDashboard: React.FC = () => {
             مرحباً بعودتك، {user?.name} - {user?.companyName}
           </p>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 space-x-reverse">
           <Button 
-            onClick={() => navigate('/create-shipment')}
+            onClick={() => setShowShipmentForm(true)}
             className="font-cairo"
           >
-            <PlusCircle className="h-4 w-4 mr-2" />
+            <PlusCircle className="h-4 w-4 ml-2" />
             إنشاء شحنة جديدة
           </Button>
           <Button 
@@ -279,7 +282,7 @@ const DriverDashboard: React.FC = () => {
             onClick={handleLocationShare}
             className="font-cairo"
           >
-            <Navigation className="h-4 w-4 mr-2" />
+            <Navigation className="h-4 w-4 ml-2" />
             {locationSharing ? "تم مشاركة الموقع" : "مشاركة الموقع"}
           </Button>
         </div>
@@ -550,6 +553,25 @@ const DriverDashboard: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Shipment Creation Dialog */}
+      <Dialog open={showShipmentForm} onOpenChange={setShowShipmentForm}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-cairo">إنشاء شحنة جديدة</DialogTitle>
+          </DialogHeader>
+          <DriverShipmentForm 
+            onClose={() => setShowShipmentForm(false)}
+            onSuccess={() => {
+              fetchDriverShipments();
+              toast({
+                title: "تم إنشاء الشحنة",
+                description: "سيتم تحديث قائمة الشحنات تلقائياً",
+              });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
