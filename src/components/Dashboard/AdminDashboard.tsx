@@ -540,6 +540,18 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="outline"
                     className="h-auto flex-col items-start p-4 text-right"
+                    onClick={() => navigate('/company-legal-data')}
+                  >
+                    <Building2 className="h-6 w-6 mb-2 text-primary" />
+                    <div>
+                      <p className="font-semibold font-cairo">البيانات القانونية</p>
+                      <p className="text-sm text-muted-foreground">إدارة البيانات القانونية والمستندات</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col items-start p-4 text-right"
                     onClick={async () => {
                       const action = async () => {
                         // Quick test shipment creation

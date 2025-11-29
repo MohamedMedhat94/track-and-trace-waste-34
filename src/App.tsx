@@ -32,6 +32,7 @@ import CompanySignatures from "./pages/CompanySignatures";
 import TermsAndConditions from "./pages/TermsAndConditions";
 import ViewTermsAcceptance from "./pages/ViewTermsAcceptance";
 import CompanyDocuments from "./pages/CompanyDocuments";
+import CompanyLegalData from "./pages/CompanyLegalData";
 
 const ShipmentDetails = React.lazy(() => import('./pages/ShipmentDetails'));
 
@@ -77,6 +78,7 @@ const App = () => (
             <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="/view-terms-acceptance" element={<ViewTermsAcceptance />} />
             <Route path="/company-documents" element={<CompanyDocuments />} />
+            <Route path="/company-legal-data" element={<CompanyLegalData />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
