@@ -133,7 +133,8 @@ const generatePDF = async () => {
                 shipment.status === 'in_transit' ? 'قيد النقل' :
                 shipment.status === 'delivered' ? 'تم التسليم' : shipment.status,
         createdAt: new Date(shipment.created_at).toLocaleDateString('ar-SA'),
-        deliveredAt: shipment.delivery_date ? new Date(shipment.delivery_date).toLocaleDateString('ar-SA') : 'غير متوفر'
+        deliveredAt: shipment.delivery_date ? new Date(shipment.delivery_date).toLocaleDateString('ar-SA') : 'غير متوفر',
+        report: shipment.shipment_report || ''
       };
     } catch (error: any) {
       console.error('Error fetching shipment data:', error);
@@ -319,6 +320,15 @@ const generatePDF = async () => {
           </div>
         </div>
 
+        ${pdfData.data.report ? `
+        <div class="section">
+          <div class="section-title">تقرير الشحنة</div>
+          <div class="data-row" style="border-bottom: none;">
+            <span class="value" style="white-space: pre-wrap; text-align: right; width: 100%;">${pdfData.data.report}</span>
+          </div>
+        </div>
+        ` : ''}
+ 
         <div class="section">
           <div class="section-title">بيانات الجهة الناقلة</div>
           <div class="data-row">
