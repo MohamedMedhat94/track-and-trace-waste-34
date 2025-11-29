@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Download, Search, Filter, ArrowLeft } from 'lucide-react';
+import { CalendarIcon, Download, Search, Filter, ArrowLeft, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import PDFGenerator from '@/components/PDF/PDFGenerator';
@@ -272,6 +272,12 @@ const Reports: React.FC = () => {
                     <Badge className={getStatusColor(shipment.status)}>
                       {getStatusText(shipment.status)}
                     </Badge>
+                    {shipment.shipment_report && (
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        <FileText className="h-3 w-3 ml-1" />
+                        تم كتابة التقرير
+                      </Badge>
+                    )}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-muted-foreground">
                     <p>المولد: {shipment.generator_company?.name}</p>

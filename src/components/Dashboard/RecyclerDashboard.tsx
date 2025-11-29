@@ -353,6 +353,12 @@ const RecyclerDashboard: React.FC = () => {
                           {getStatusIcon(shipment.status)}
                           <span className="ml-1">{getStatusText(shipment.status)}</span>
                         </Badge>
+                        {shipment.shipment_report && (
+                          <Badge variant="secondary" className="bg-green-100 text-green-800">
+                            <FileText className="h-3 w-3 ml-1" />
+                            تم كتابة التقرير
+                          </Badge>
+                        )}
                       </div>
                       
                        <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm mb-3">
