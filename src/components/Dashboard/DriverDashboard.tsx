@@ -3,11 +3,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import DriverLocationRegister from '@/components/Driver/DriverLocationRegister';
+import GPSLocationTracker from '@/components/Driver/GPSLocationTracker';
 import ShipmentPDFViewer from '@/components/PDF/ShipmentPDFViewer';
 import DriverShipmentForm from '@/components/Forms/DriverShipmentForm';
 import { 
@@ -20,7 +22,9 @@ import {
   FileText,
   Eye,
   Printer,
-  PlusCircle
+  PlusCircle,
+  Satellite,
+  List
 } from 'lucide-react';
 
 const DriverDashboard: React.FC = () => {
@@ -262,31 +266,48 @@ const DriverDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold font-cairo">لوحة تحكم السائق</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl md:text-3xl font-bold font-cairo">لوحة تحكم السائق</h1>
+          <p className="text-muted-foreground text-sm md:text-base">
             مرحباً بعودتك، {user?.name} - {user?.companyName}
           </p>
         </div>
-        <div className="flex space-x-2 space-x-reverse">
+        <div className="flex flex-wrap gap-2">
           <Button 
             onClick={() => setShowShipmentForm(true)}
-            className="font-cairo"
+            className="font-cairo text-sm"
+            size="sm"
           >
             <PlusCircle className="h-4 w-4 ml-2" />
-            إنشاء شحنة جديدة
+            إنشاء شحنة
           </Button>
           <Button 
             variant={locationSharing ? "default" : "outline"}
             onClick={handleLocationShare}
-            className="font-cairo"
+            className="font-cairo text-sm"
+            size="sm"
           >
             <Navigation className="h-4 w-4 ml-2" />
-            {locationSharing ? "تم مشاركة الموقع" : "مشاركة الموقع"}
+            {locationSharing ? "موقع نشط" : "مشاركة الموقع"}
           </Button>
         </div>
       </div>
+
+      {/* Tabs for different sections */}
+      <Tabs defaultValue="shipments" dir="rtl" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="shipments" className="font-cairo flex items-center gap-2">
+            <List className="h-4 w-4" />
+            الشحنات
+          </TabsTrigger>
+          <TabsTrigger value="gps" className="font-cairo flex items-center gap-2">
+            <Satellite className="h-4 w-4" />
+            تتبع GPS
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="shipments" className="space-y-6">
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -513,46 +534,69 @@ const DriverDashboard: React.FC = () => {
           </Card>
         )}
       </div>
+        </TabsContent>
 
-      {/* Driver Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-cairo">معلومات السائق</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="p-4 bg-primary/10 rounded-lg">
-              <h4 className="font-semibold text-primary mb-2">ما الذي يمكنني فعله كسائق؟</h4>
-              <ul className="text-sm space-y-1 text-muted-foreground">
-                <li>• تسجيل أوقات المغادرة والوصول للتسليمات</li>
-                <li>• مشاركة الموقع الحالي أثناء التسليمات النشطة</li>
-                <li>• اختيار شركات المولدة والمدورة من المهام المخصصة</li>
-                <li>• تحديث حالة التسليم والطوابع الزمنية</li>
-                <li>• عرض مسارات التسليم والتوجيه</li>
-              </ul>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-semibold mb-2">مشاركة الموقع</h4>
-                <p className="text-sm text-muted-foreground">
-                  قم بتفعيل مشاركة الموقع لتتبع التسليمات في الوقت الفعلي وتوفير تحديثات دقيقة للتسليم.
-                </p>
-              </div>
-              
-              <div className="p-4 bg-muted/50 rounded-lg">
-                <h4 className="font-semibold mb-2">عملية التسليم</h4>
-                <div className="text-sm text-muted-foreground space-y-1">
-                  <p>1. استلام مهمة التسليم</p>
-                  <p>2. بدء التسليم (الموقع مطلوب)</p>
-                  <p>3. التوجه إلى موقع الاستلام</p>
-                  <p>4. إكمال الاستلام والتسليم</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        {/* GPS Tab */}
+        <TabsContent value="gps" className="space-y-6">
+          <GPSLocationTracker />
+          
+          {/* Driver Location Registration */}
+          <DriverLocationRegister 
+            driverId={user?.id || 'temp-driver-id'} 
+            onLocationUpdate={(location) => {
+              console.log('Location updated:', location);
+              toast({
+                title: "تم تحديث الموقع",
+                description: "تم تسجيل موقعك بنجاح",
+              });
+            }}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Print Shipment Section */}
+      {selectedShipmentForPrint && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-cairo">طباعة تفاصيل الشحنة</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ShipmentPDFViewer 
+              shipment={{
+                id: selectedShipmentForPrint.id,
+                shipment_number: selectedShipmentForPrint.id,
+                status: selectedShipmentForPrint.status,
+                quantity: parseFloat(selectedShipmentForPrint.quantity.replace(' kg', '')),
+                created_at: new Date().toISOString(),
+                generator_company: {
+                  id: '1',
+                  name: selectedShipmentForPrint.generator,
+                  address: selectedShipmentForPrint.pickupAddress
+                },
+                recycler_company: {
+                  id: '2', 
+                  name: selectedShipmentForPrint.recycler,
+                  address: selectedShipmentForPrint.deliveryAddress
+                },
+                waste_type: {
+                  id: '1',
+                  name: selectedShipmentForPrint.wasteType
+                },
+                pickup_location: selectedShipmentForPrint.pickupAddress,
+                delivery_location: selectedShipmentForPrint.deliveryAddress
+              }}
+              driverName={user?.name}
+            />
+            <Button 
+              variant="outline" 
+              onClick={() => setSelectedShipmentForPrint(null)}
+              className="mt-4 w-full"
+            >
+              إغلاق
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Shipment Creation Dialog */}
       <Dialog open={showShipmentForm} onOpenChange={setShowShipmentForm}>
