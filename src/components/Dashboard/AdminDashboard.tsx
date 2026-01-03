@@ -552,6 +552,18 @@ const AdminDashboard: React.FC = () => {
                   <Button
                     variant="outline"
                     className="h-auto flex-col items-start p-4 text-right"
+                    onClick={() => navigate('/homepage-settings')}
+                  >
+                    <Settings className="h-6 w-6 mb-2 text-primary" />
+                    <div>
+                      <p className="font-semibold font-cairo">إعدادات الصفحة الرئيسية</p>
+                      <p className="text-sm text-muted-foreground">تخصيص المميزات والنصوص</p>
+                    </div>
+                  </Button>
+                  
+                  <Button
+                    variant="outline"
+                    className="h-auto flex-col items-start p-4 text-right"
                     onClick={async () => {
                       const action = async () => {
                         // Quick test shipment creation
@@ -716,8 +728,21 @@ const AdminDashboard: React.FC = () => {
           {/* Company Approvals Tab */}
           {activeTab === 'approvals' && <CompanyApprovalPanel />}
 
-          {/* Driver Tracking Tab */}
-          {activeTab === 'tracking' && <RealTimeDriverMap />}
+          {/* Driver Tracking Tab - Using Live Map */}
+          {activeTab === 'tracking' && (
+            <div className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="font-cairo flex items-center gap-2">
+                    <MapPin className="h-6 w-6 text-primary" />
+                    خريطة تتبع السائقين المباشرة
+                  </CardTitle>
+                  <CardDescription>عرض مواقع جميع السائقين على الخريطة في الوقت الفعلي</CardDescription>
+                </CardHeader>
+              </Card>
+              <RealTimeDriverMap />
+            </div>
+          )}
           
           {/* Testing Data Tab */}
           {activeTab === 'testing' && <TestDataGenerator />}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Users, Package, BarChart3, Truck, Recycle, Shield, Globe, UserPlus, MapPin, CheckCircle } from 'lucide-react';
+import { Building2, Users, Package, BarChart3, Truck, Recycle, Shield, Globe, UserPlus, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import companyLogo from '@/assets/company-logo.png';
@@ -12,6 +12,13 @@ interface Stats {
   recyclingRate: number;
 }
 
+interface HomepageFeature {
+  id: string;
+  value: string;
+  is_visible: boolean;
+  display_order: number;
+}
+
 const WelcomePage: React.FC = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState<Stats>({
@@ -20,14 +27,15 @@ const WelcomePage: React.FC = () => {
     recyclingRate: 95
   });
   const [loading, setLoading] = useState(true);
+  const [homepageFeatures, setHomepageFeatures] = useState<HomepageFeature[]>([]);
 
   useEffect(() => {
     fetchStats();
+    fetchHomepageFeatures();
   }, []);
 
   const fetchStats = async () => {
     try {
-      // Fetch real stats from database
       const [companiesResult, shipmentsResult] = await Promise.all([
         supabase.from('companies').select('id', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.from('shipments').select('id', { count: 'exact', head: true })
@@ -42,6 +50,21 @@ const WelcomePage: React.FC = () => {
       console.error('Error fetching stats:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchHomepageFeatures = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('homepage_settings')
+        .select('*')
+        .eq('is_visible', true)
+        .order('display_order');
+
+      if (error) throw error;
+      setHomepageFeatures(data || []);
+    } catch (error) {
+      console.error('Error fetching homepage features:', error);
     }
   };
 
@@ -81,7 +104,7 @@ const WelcomePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/50">
       <div className="container mx-auto px-4 py-6 md:py-8">
-        {/* Header - Mobile Optimized */}
+        {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <div className="flex justify-center mb-4 md:mb-6">
             <img src={companyLogo} alt="آي ريسايكل" className="h-16 md:h-20 w-auto" />
@@ -98,7 +121,7 @@ const WelcomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Features Grid - Mobile Optimized */}
+        {/* Features Grid */}
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-12">
           {features.map((feature, index) => (
             <Card key={index} className="h-full hover:shadow-lg transition-shadow border-border/50">
@@ -119,7 +142,7 @@ const WelcomePage: React.FC = () => {
           ))}
         </div>
 
-        {/* Call to Action - Mobile Optimized */}
+        {/* Call to Action */}
         <div className="text-center max-w-2xl mx-auto mb-8 md:mb-12">
           <Card className="p-4 md:p-8 bg-card/80 backdrop-blur border-primary/20">
             <CardHeader className="p-0 pb-4 md:pb-6">
@@ -154,7 +177,7 @@ const WelcomePage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Stats Section - Mobile Optimized with Real Data */}
+        {/* Stats Section */}
         <div className="grid grid-cols-3 gap-4 md:gap-8 text-center">
           <Card className="p-3 md:p-6 bg-primary/5 border-primary/20">
             <div className="text-2xl md:text-4xl font-bold text-primary font-cairo">
@@ -176,25 +199,17 @@ const WelcomePage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Features List - Additional Info */}
-        <div className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-            <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-            <span className="text-sm md:text-base font-cairo">تتبع GPS مباشر للسائقين</span>
+        {/* Dynamic Features List from Database */}
+        {homepageFeatures.length > 0 && (
+          <div className="mt-8 md:mt-12 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
+            {homepageFeatures.map((feature) => (
+              <div key={feature.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                <span className="text-sm md:text-base font-cairo">{feature.value}</span>
+              </div>
+            ))}
           </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-            <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-            <span className="text-sm md:text-base font-cairo">تقارير بيئية شاملة</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-            <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-            <span className="text-sm md:text-base font-cairo">إدارة متكاملة للشحنات</span>
-          </div>
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-            <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
-            <span className="text-sm md:text-base font-cairo">نظام موافقات إلكتروني</span>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );
