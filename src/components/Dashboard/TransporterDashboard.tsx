@@ -30,7 +30,9 @@ import ShipmentNotifications from '@/components/Notifications/ShipmentNotificati
 import StatusTracker from '@/components/Shipment/StatusTracker';
 import ShipmentReportForm from '@/components/Shipment/ShipmentReportForm';
 import CompanyRegistrationForm from '@/components/Forms/CompanyRegistrationForm';
+import LiveDriverMap from '@/components/Maps/LiveDriverMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const TransporterDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -398,6 +400,14 @@ const TransporterDashboard: React.FC = () => {
         <ConsolidatedShipmentReport />
       )}
 
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview" className="font-cairo">نظرة عامة</TabsTrigger>
+          <TabsTrigger value="driver-tracking" className="font-cairo">تتبع السائقين</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
@@ -595,6 +605,12 @@ const TransporterDashboard: React.FC = () => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="driver-tracking" className="space-y-4">
+          <LiveDriverMap />
+        </TabsContent>
+      </Tabs>
 
       {/* Modals */}
       {showShipmentForm && (

@@ -455,6 +455,36 @@ export type Database = {
           },
         ]
       }
+      homepage_settings: {
+        Row: {
+          display_order: number | null
+          id: string
+          is_visible: boolean | null
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: string
+        }
+        Insert: {
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: string
+        }
+        Update: {
+          display_order?: number | null
+          id?: string
+          is_visible?: boolean | null
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string | null
