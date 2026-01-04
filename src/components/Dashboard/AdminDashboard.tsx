@@ -21,7 +21,7 @@ import ModalManager from '@/components/Modals/ModalManager';
 import PDFGenerator from '@/components/PDF/PDFGenerator';
 import UserActivationPanel from '@/components/Admin/UserActivationPanel';
 import CompanyApprovalPanel from '@/components/Admin/CompanyApprovalPanel';
-import RealTimeDriverMap from '@/components/GPS/RealTimeDriverMap';
+import SimpleDriverMap from '@/components/Maps/SimpleDriverMap';
 import TestDataGenerator from '@/components/Admin/TestDataGenerator';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -740,7 +740,7 @@ const AdminDashboard: React.FC = () => {
                   <CardDescription>عرض مواقع جميع السائقين على الخريطة في الوقت الفعلي</CardDescription>
                 </CardHeader>
               </Card>
-              <RealTimeDriverMap />
+              <SimpleDriverMap />
             </div>
           )}
           
