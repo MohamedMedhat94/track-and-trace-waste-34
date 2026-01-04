@@ -30,7 +30,7 @@ import ShipmentNotifications from '@/components/Notifications/ShipmentNotificati
 import StatusTracker from '@/components/Shipment/StatusTracker';
 import ShipmentReportForm from '@/components/Shipment/ShipmentReportForm';
 import CompanyRegistrationForm from '@/components/Forms/CompanyRegistrationForm';
-import LiveDriverMap from '@/components/Maps/LiveDriverMap';
+import SimpleDriverMap from '@/components/Maps/SimpleDriverMap';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -608,7 +608,7 @@ const TransporterDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="driver-tracking" className="space-y-4">
-          <LiveDriverMap />
+          <SimpleDriverMap />
         </TabsContent>
       </Tabs>
 
