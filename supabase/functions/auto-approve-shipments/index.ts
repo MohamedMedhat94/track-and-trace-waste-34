@@ -16,9 +16,54 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    // Get the authorization header to verify the caller
+    const authHeader = req.headers.get('Authorization');
+    
+    // Check if this is a service role call (from cron/scheduled job) or admin user
+    const isServiceRoleCall = authHeader?.includes(supabaseServiceKey);
+    
+    // If not service role, verify the caller is an admin
+    if (!isServiceRoleCall && authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+        global: { headers: { Authorization: `Bearer ${token}` } }
+      });
+      
+      const { data: { user }, error: userError } = await userClient.auth.getUser();
+      
+      if (userError || !user) {
+        console.error('Auth error:', userError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Unauthorized: Invalid authentication' }),
+          { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+      
+      // Check if user is admin using service role client
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: isAdmin, error: adminError } = await supabaseAdmin.rpc('has_role', {
+        _user_id: user.id,
+        _role: 'admin'
+      });
+      
+      if (adminError || !isAdmin) {
+        console.error('Access denied: User is not admin');
+        return new Response(
+          JSON.stringify({ success: false, error: 'Forbidden: Admin access required' }),
+          { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    } else if (!isServiceRoleCall && !authHeader) {
+      // No auth header and not service role - reject
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: Authentication required' }),
+        { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('Starting auto-approval process...');
+    console.log('Starting auto-approval process (authorized caller)...');
 
     // Call the auto_approve_expired_shipments function
     const { error: approvalError } = await supabase.rpc('auto_approve_expired_shipments');
