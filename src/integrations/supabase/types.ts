@@ -634,6 +634,59 @@ export type Database = {
           },
         ]
       }
+      shipment_messages: {
+        Row: {
+          attachment_url: string | null
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          message_type: string | null
+          sender_company_id: string | null
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          shipment_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          attachment_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          message_type?: string | null
+          sender_company_id?: string | null
+          sender_id: string
+          sender_name: string
+          sender_role: string
+          shipment_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          attachment_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          message_type?: string | null
+          sender_company_id?: string | null
+          sender_id?: string
+          sender_name?: string
+          sender_role?: string
+          shipment_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipment_messages_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shipment_notifications: {
         Row: {
           created_at: string | null
