@@ -19,13 +19,18 @@ serve(async (req) => {
     // Get the authorization header to verify the caller
     const authHeader = req.headers.get('Authorization');
     
-    // Check if this is a service role call (from cron/scheduled job) or admin user
+    // Check if this is a service role call or anon key call (from cron/scheduled job)
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const isServiceRoleCall = authHeader?.includes(supabaseServiceKey);
+    const isCronCall = authHeader?.includes(anonKey);
     
-    // If not service role, verify the caller is an admin
-    if (!isServiceRoleCall && authHeader) {
+    // Allow cron calls (with anon key) and service role calls
+    if (isServiceRoleCall || isCronCall) {
+      console.log('Authorized: Cron or service role call');
+    } else if (authHeader) {
+      // User call - verify admin
       const token = authHeader.replace('Bearer ', '');
-      const userClient = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+      const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } }
       });
       
@@ -53,8 +58,8 @@ serve(async (req) => {
           { status: 403, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
-    } else if (!isServiceRoleCall && !authHeader) {
-      // No auth header and not service role - reject
+    } else {
+      // No auth header - reject
       return new Response(
         JSON.stringify({ success: false, error: 'Unauthorized: Authentication required' }),
         { status: 401, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
