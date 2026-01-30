@@ -26,6 +26,7 @@ const DriverShipmentForm: React.FC<DriverShipmentFormProps> = ({ onClose, onSucc
   const [formData, setFormData] = useState({
     shipment_number: '',
     generator_company_id: '',
+    transporter_company_id: '', // Allow manual selection if not linked
     recycler_company_id: '',
     waste_type_id: '',
     waste_description: '',
@@ -59,16 +60,6 @@ const DriverShipmentForm: React.FC<DriverShipmentFormProps> = ({ onClose, onSucc
         toast({
           title: "خطأ",
           description: "لم يتم العثور على معلومات السائق. يرجى التواصل مع المسؤول.",
-          variant: "destructive",
-        });
-        onClose();
-        return;
-      }
-
-      if (!driver.transport_company_id) {
-        toast({
-          title: "خطأ",
-          description: "لم يتم ربط حسابك بشركة نقل. يرجى التواصل مع المسؤول.",
           variant: "destructive",
         });
         onClose();
@@ -140,12 +131,25 @@ const DriverShipmentForm: React.FC<DriverShipmentFormProps> = ({ onClose, onSucc
     setIsLoading(true);
 
     try {
+      // Use driver's linked company or manually selected one
+      const transporterId = driverInfo.transport_company_id || formData.transporter_company_id;
+      
+      if (!transporterId) {
+        toast({
+          title: "خطأ",
+          description: "يرجى اختيار شركة النقل",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const shipmentData = {
         shipment_number: formData.shipment_number,
         generator_company_id: formData.generator_company_id,
-        transporter_company_id: driverInfo.transport_company_id, // Auto-filled from driver
+        transporter_company_id: transporterId,
         recycler_company_id: formData.recycler_company_id,
-        driver_id: driverInfo.id, // Auto-filled from driver
+        driver_id: driverInfo.id,
         waste_type_id: formData.waste_type_id,
         waste_description: formData.waste_description,
         quantity: parseFloat(formData.quantity) || 0,
@@ -291,6 +295,29 @@ const DriverShipmentForm: React.FC<DriverShipmentFormProps> = ({ onClose, onSucc
               </Select>
             </div>
           </div>
+
+          {/* Transporter Company - Show only if driver is not linked to a company */}
+          {!driverInfo?.transport_company_id && (
+            <div>
+              <Label htmlFor="transporter_company_id" className="font-cairo">شركة النقل *</Label>
+              <Select
+                value={formData.transporter_company_id}
+                onValueChange={(value) => handleInputChange('transporter_company_id', value)}
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="اختر شركة النقل" />
+                </SelectTrigger>
+                <SelectContent>
+                  {companies.filter(c => c.type === 'transporter').map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Waste Type */}
           <div>
