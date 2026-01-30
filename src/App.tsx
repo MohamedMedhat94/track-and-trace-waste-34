@@ -34,6 +34,11 @@ import ViewTermsAcceptance from "./pages/ViewTermsAcceptance";
 import CompanyDocuments from "./pages/CompanyDocuments";
 import CompanyLegalData from "./pages/CompanyLegalData";
 import HomepageSettingsManagement from "./pages/HomepageSettingsManagement";
+import CompanyProfile from "./pages/CompanyProfile";
+import AdvancedDriverTracking from "./pages/AdvancedDriverTracking";
+import AdminTermsAcceptance from "./pages/AdminTermsAcceptance";
+import PasswordManagement from "./pages/PasswordManagement";
+import WelcomePage from "./pages/WelcomePage";
 
 const ShipmentDetails = React.lazy(() => import('./pages/ShipmentDetails'));
 
@@ -65,10 +70,10 @@ const App = () => (
             <Route path="/company-importer" element={<CompanyImporter />} />
             <Route path="/register-company" element={<PublicCompanyRegister />} />
             <Route path="/active-drivers" element={<ActiveDriversDetails />} />
-        <Route path="/companies" element={<CompaniesDetails />} />
-        <Route path="/companies-details" element={<CompaniesDetails />} />
-          <Route path="/user-company-assignment" element={<UserCompanyAssignment />} />
-          <Route path="/testing-dashboard" element={<TestingDashboard />} />
+            <Route path="/companies" element={<CompaniesDetails />} />
+            <Route path="/companies-details" element={<CompaniesDetails />} />
+            <Route path="/user-company-assignment" element={<UserCompanyAssignment />} />
+            <Route path="/testing-dashboard" element={<TestingDashboard />} />
             <Route path="/active-shipments" element={<ActiveShipmentsDetails />} />
             <Route path="/total-shipments" element={<TotalShipmentsDetails />} />
             <Route path="/pending-users" element={<PendingUsersDetails />} />
@@ -81,6 +86,11 @@ const App = () => (
             <Route path="/company-documents" element={<CompanyDocuments />} />
             <Route path="/company-legal-data" element={<CompanyLegalData />} />
             <Route path="/homepage-settings" element={<HomepageSettingsManagement />} />
+            <Route path="/company-profile" element={<CompanyProfile />} />
+            <Route path="/advanced-driver-tracking" element={<AdvancedDriverTracking />} />
+            <Route path="/admin-terms-acceptance" element={<AdminTermsAcceptance />} />
+            <Route path="/password-management" element={<PasswordManagement />} />
+            <Route path="/welcome" element={<WelcomePage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
