@@ -3,13 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Package, Building2, Truck, User, MapPin, Calendar, Weight } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Package, Building2, Truck, User, MapPin, Calendar, Weight, MessageCircle, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/context/AuthContext';
 import StatusTracker from '@/components/Shipment/StatusTracker';
 import ShipmentApprovalPanel from '@/components/Shipment/ShipmentApprovalPanel';
 import DriverTracker from '@/components/Driver/DriverTracker';
+import ShipmentChat from '@/components/Chat/ShipmentChat';
 import { useButtonValidation } from '@/hooks/useButtonValidation';
 
 interface ShipmentDetails {
@@ -485,6 +487,12 @@ const ShipmentDetails: React.FC = () => {
                 showControls={user?.role === 'driver'}
               />
             )}
+            
+            {/* Shipment Chat */}
+            <ShipmentChat
+              shipmentId={shipment.id}
+              shipmentNumber={shipment.shipment_number}
+            />
           </div>
         </div>
       </div>
