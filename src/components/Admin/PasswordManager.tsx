@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Key, Mail, User, Shield, RefreshCw } from 'lucide-react';
+import { Key, Mail, User, Shield, RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useButtonValidation } from '@/hooks/useButtonValidation';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface UserCredential {
   id: string;
@@ -32,6 +33,7 @@ const PasswordManager: React.FC = () => {
   const [newPassword, setNewPassword] = useState('');
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -54,7 +56,7 @@ const PasswordManager: React.FC = () => {
       
       setUsers(usersWithCredentials);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error('Error fetching users');
       toast({
         title: "خطأ في تحميل البيانات",
         description: "حدث خطأ أثناء تحميل بيانات المستخدمين",
@@ -66,19 +68,48 @@ const PasswordManager: React.FC = () => {
   };
 
   const generateNewPassword = () => {
-    // Generate a strong random password
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
+    // Generate a strong random password with special characters
+    const upper = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+    const lower = 'abcdefghijkmnpqrstuvwxyz';
+    const numbers = '23456789';
+    const special = '!@#$%^&*';
+    
     let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    // Ensure at least one of each type
+    password += upper.charAt(Math.floor(Math.random() * upper.length));
+    password += lower.charAt(Math.floor(Math.random() * lower.length));
+    password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+    password += special.charAt(Math.floor(Math.random() * special.length));
+    
+    // Fill the rest
+    const allChars = upper + lower + numbers + special;
+    for (let i = 0; i < 8; i++) {
+      password += allChars.charAt(Math.floor(Math.random() * allChars.length));
     }
+    
+    // Shuffle the password
+    password = password.split('').sort(() => Math.random() - 0.5).join('');
+    
     setNewPassword(password);
     setGeneratedPassword(password);
   };
 
-  const resetUserPassword = async (userId: string, newPass: string) => {
+  const resetUserPassword = async (userId: string, userEmail: string, newPass: string) => {
     const action = async () => {
-      // For demo purposes - in real app, this would call admin API
+      // Call the admin password reset edge function
+      const { data, error } = await supabase.functions.invoke('admin-reset-password', {
+        body: { 
+          targetUserId: userId,
+          targetEmail: userEmail,
+          newPassword: newPass
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || 'فشل في إعادة تعيين كلمة المرور');
+      }
+
+      // Log the password reset activity
       await supabase.rpc('log_system_activity', {
         action_type_param: 'PASSWORD_RESET',
         entity_type_param: 'user',
@@ -88,6 +119,8 @@ const PasswordManager: React.FC = () => {
           timestamp: new Date().toISOString()
         })
       });
+
+      return data;
     };
 
     return await validateAndExecute(
@@ -115,18 +148,23 @@ const PasswordManager: React.FC = () => {
   const handlePasswordReset = async () => {
     if (!selectedUser || !newPassword) return;
 
-    const result = await resetUserPassword(selectedUser.user_id, newPassword);
-    
-    if (result.success) {
-      // Update local state
-      setUsers(prev => prev.map(user => 
-        user.id === selectedUser.id 
-          ? { ...user, password_reset_needed: false }
-          : user
-      ));
-      setSelectedUser(null);
-      setNewPassword('');
-      setGeneratedPassword('');
+    setIsResetting(true);
+    try {
+      const result = await resetUserPassword(selectedUser.user_id, selectedUser.email, newPassword);
+      
+      if (result.success) {
+        // Update local state
+        setUsers(prev => prev.map(user => 
+          user.id === selectedUser.id 
+            ? { ...user, password_reset_needed: false }
+            : user
+        ));
+        setSelectedUser(null);
+        setNewPassword('');
+        setGeneratedPassword('');
+      }
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -179,6 +217,14 @@ const PasswordManager: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Security Note */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            يُنصح باستخدام "إرسال رابط إعادة التعيين" للمستخدمين لإعادة تعيين كلمات المرور الخاصة بهم بشكل آمن.
+          </AlertDescription>
+        </Alert>
+
         {/* Filter */}
         <div className="flex items-center space-x-4 space-x-reverse">
           <Label>تصفية حسب الدور:</Label>
@@ -254,6 +300,13 @@ const PasswordManager: React.FC = () => {
                     </DialogHeader>
                     
                     <div className="space-y-4">
+                      <Alert>
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          كلمة المرور يجب أن تحتوي على: 8 أحرف على الأقل، حرف كبير، حرف صغير، رقم، ورمز خاص (!@#$%^&*)
+                        </AlertDescription>
+                      </Alert>
+
                       <div className="space-y-2">
                         <Label>كلمة المرور الجديدة</Label>
                         <div className="flex space-x-2 space-x-reverse">
@@ -292,9 +345,9 @@ const PasswordManager: React.FC = () => {
                       </Button>
                       <Button
                         onClick={handlePasswordReset}
-                        disabled={!newPassword}
+                        disabled={!newPassword || isResetting}
                       >
-                        تعيين كلمة المرور
+                        {isResetting ? 'جاري التعيين...' : 'تعيين كلمة المرور'}
                       </Button>
                     </DialogFooter>
                   </DialogContent>

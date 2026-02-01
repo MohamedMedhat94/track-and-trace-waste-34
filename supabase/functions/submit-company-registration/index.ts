@@ -7,13 +7,53 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
+// Common password blacklist
+const COMMON_PASSWORDS = [
+  'password', 'password1', 'password123', '123456', '12345678', '123456789',
+  'qwerty', 'qwerty123', 'admin', 'admin123', 'letmein', 'welcome', 'welcome1',
+  'abc123', 'monkey', '123123', 'dragon', 'master', 'login', 'admin1234'
+];
+
+// Generic error messages (hide internal details)
+const GENERIC_ERRORS = {
+  AUTH_FAILED: 'فشل في إنشاء الحساب',
+  VALIDATION_FAILED: 'البيانات المدخلة غير صالحة',
+  SERVER_ERROR: 'حدث خطأ في الخادم. يرجى المحاولة مرة أخرى',
+  DUPLICATE_EMAIL: 'هذا البريد الإلكتروني مستخدم بالفعل'
+};
+
+function validatePassword(password: string): { valid: boolean; error?: string } {
+  if (!password || password.length < 8) {
+    return { valid: false, error: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' };
+  }
+  if (password.length > 100) {
+    return { valid: false, error: 'كلمة المرور طويلة جداً' };
+  }
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل' };
+  }
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل' };
+  }
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل' };
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return { valid: false, error: 'يجب أن تحتوي كلمة المرور على رمز خاص واحد على الأقل (!@#$%^&*)' };
+  }
+  const lowerPassword = password.toLowerCase();
+  if (COMMON_PASSWORDS.some(common => lowerPassword.includes(common))) {
+    return { valid: false, error: 'كلمة المرور ضعيفة جداً. يرجى اختيار كلمة مرور أقوى' };
+  }
+  return { valid: true };
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // إنشاء client باستخدام service role key للتحكم الكامل
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -30,10 +70,10 @@ serve(async (req) => {
     if (method === 'POST') {
       const companyData = await req.json()
       
-      // التحقق من البيانات المطلوبة
+      // Validate required fields
       if (!companyData.name || !companyData.type || !companyData.email || !companyData.phone || !companyData.password) {
         return new Response(
-          JSON.stringify({ error: 'المطلوب: اسم الجهة، نوع الجهة، البريد الإلكتروني، الهاتف، وكلمة المرور' }),
+          JSON.stringify({ error: GENERIC_ERRORS.VALIDATION_FAILED }),
           { 
             status: 400, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -41,9 +81,9 @@ serve(async (req) => {
         )
       }
 
-      // التحقق من صحة البريد الإلكتروني
+      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(companyData.email)) {
+      if (!emailRegex.test(companyData.email) || companyData.email.length > 255) {
         return new Response(
           JSON.stringify({ error: 'البريد الإلكتروني غير صالح' }),
           { 
@@ -53,42 +93,11 @@ serve(async (req) => {
         )
       }
 
-      // Validate email length
-      if (companyData.email.length > 255) {
+      // Validate password with enhanced requirements
+      const passwordValidation = validatePassword(companyData.password);
+      if (!passwordValidation.valid) {
         return new Response(
-          JSON.stringify({ error: 'البريد الإلكتروني طويل جداً (الحد الأقصى 255 حرف)' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      // Validate password strength
-      if (companyData.password.length < 8) {
-        return new Response(
-          JSON.stringify({ error: 'يجب أن تكون كلمة المرور 8 أحرف على الأقل' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      if (companyData.password.length > 100) {
-        return new Response(
-          JSON.stringify({ error: 'كلمة المرور طويلة جداً (الحد الأقصى 100 حرف)' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      if (!/[A-Z]/.test(companyData.password)) {
-        return new Response(
-          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على حرف كبير واحد على الأقل' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      if (!/[a-z]/.test(companyData.password)) {
-        return new Response(
-          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على حرف صغير واحد على الأقل' }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-      if (!/[0-9]/.test(companyData.password)) {
-        return new Response(
-          JSON.stringify({ error: 'يجب أن تحتوي كلمة المرور على رقم واحد على الأقل' }),
+          JSON.stringify({ error: passwordValidation.error }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -96,40 +105,38 @@ serve(async (req) => {
       // Validate company name length
       if (companyData.name.trim().length === 0 || companyData.name.length > 200) {
         return new Response(
-          JSON.stringify({ error: 'اسم الشركة يجب أن يكون بين 1 و 200 حرف' }),
+          JSON.stringify({ error: 'اسم الشركة غير صالح' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
-      // Validate phone format (allow numbers starting with 0 for local numbers)
+      // Validate phone format
       const cleanPhone = companyData.phone.replace(/[\s\-\(\)]/g, '');
-      // Allow numbers starting with + or 0, followed by digits (length 8-15)
       if (!/^(\+?[1-9]\d{7,14}|0\d{7,14})$/.test(cleanPhone)) {
-        console.log('Phone validation failed for:', cleanPhone);
+        console.error('Phone validation failed');
         return new Response(
-          JSON.stringify({ error: 'تنسيق رقم الهاتف غير صالح. يجب أن يكون رقم هاتف صحيح' }),
+          JSON.stringify({ error: 'رقم الهاتف غير صالح' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
-      // إنشاء حساب المستخدم أولاً
+      // Create user account
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: companyData.email,
         password: companyData.password,
-        email_confirm: true, // تأكيد البريد الإلكتروني تلقائياً
+        email_confirm: true,
         user_metadata: {
           full_name: companyData.contact_person || companyData.name,
           role: companyData.type,
-          is_active: true // تفعيل الحساب من البداية
+          is_active: true
         }
       })
 
       if (authError) {
-        console.error('Auth error:', authError)
-        // تحقق إذا كان المستخدم موجود بالفعل
-        if (authError.message.includes('already registered')) {
+        console.error('Auth error:', authError.message)
+        if (authError.message.includes('already') || authError.message.includes('registered')) {
           return new Response(
-            JSON.stringify({ error: 'البريد الإلكتروني مسجل بالفعل. يرجى استخدام بريد إلكتروني آخر.' }),
+            JSON.stringify({ error: GENERIC_ERRORS.DUPLICATE_EMAIL }),
             { 
               status: 400, 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -137,7 +144,7 @@ serve(async (req) => {
           )
         }
         return new Response(
-          JSON.stringify({ error: `خطأ في إنشاء المستخدم: ${authError.message}` }),
+          JSON.stringify({ error: GENERIC_ERRORS.AUTH_FAILED }),
           { 
             status: 400, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -145,9 +152,9 @@ serve(async (req) => {
         )
       }
 
-      console.log('User created successfully:', authData.user.id)
+      console.log('User created successfully')
 
-      // إدراج بيانات الشركة
+      // Insert company data
       const { data, error } = await supabaseAdmin
         .from('companies')
         .insert([{
@@ -165,17 +172,17 @@ serve(async (req) => {
           operating_license_no: companyData.operating_license_no || null,
           registered_activity: companyData.registered_activity || null,
           facility_reg_no: companyData.facility_reg_no || null,
-          status: 'active', // تفعيل فوري
-          is_active: true // تفعيل الشركة مباشرة
+          status: 'active',
+          is_active: true
         }])
         .select()
 
       if (error) {
-        console.error('Database error:', error)
-        // حذف المستخدم في حالة فشل إنشاء الشركة
+        console.error('Database error');
+        // Delete user on company creation failure
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id)
         return new Response(
-          JSON.stringify({ error: `خطأ في قاعدة البيانات: ${error.message}` }),
+          JSON.stringify({ error: GENERIC_ERRORS.SERVER_ERROR }),
           { 
             status: 400, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -183,10 +190,9 @@ serve(async (req) => {
         )
       }
 
-      console.log('Company created successfully:', data[0].id)
+      console.log('Company created successfully')
 
-      // إنشاء أو تحديث ملف المستخدم
-      // التحقق أولاً إذا كان الـ trigger أنشأ الـ profile
+      // Create or update user profile
       const { data: existingProfile } = await supabaseAdmin
         .from('profiles')
         .select('user_id')
@@ -194,26 +200,24 @@ serve(async (req) => {
         .single()
 
       if (existingProfile) {
-        // الـ profile موجود، نحدثه فقط
         console.log('Profile exists, updating...')
         const { error: updateError } = await supabaseAdmin
           .from('profiles')
           .update({
             company_id: data[0].id,
             phone: companyData.phone,
-            is_active: true, // تفعيل الحساب تلقائياً
+            is_active: true,
             full_name: companyData.contact_person || companyData.name,
             role: companyData.type
           })
           .eq('user_id', authData.user.id)
         
         if (updateError) {
-          console.error('Profile update error:', updateError)
+          console.error('Profile update error');
         } else {
           console.log('Profile updated successfully')
         }
       } else {
-        // الـ profile غير موجود، ننشئه
         console.log('Profile does not exist, creating...')
         const { error: insertError } = await supabaseAdmin
           .from('profiles')
@@ -224,18 +228,17 @@ serve(async (req) => {
             phone: companyData.phone,
             role: companyData.type,
             company_id: data[0].id,
-            is_active: true // تفعيل الحساب تلقائياً
+            is_active: true
           })
         
         if (insertError) {
-          console.error('Profile insert error:', insertError)
+          console.error('Profile insert error');
         } else {
           console.log('Profile created successfully')
         }
       }
 
-      // لا نحتاج إلى إرسال إشعار في الوقت الحالي - تركيز على عمل النظام
-      console.log('Company registered successfully with ID:', data[0].id);
+      console.log('Company registered successfully');
 
       return new Response(
         JSON.stringify({ 
@@ -258,9 +261,9 @@ serve(async (req) => {
     )
 
   } catch (error) {
-    console.error('Function error:', error)
+    console.error('Function error:', error.message)
     return new Response(
-      JSON.stringify({ error: `خطأ في الخادم: ${error.message}` }),
+      JSON.stringify({ error: GENERIC_ERRORS.SERVER_ERROR }),
       { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
