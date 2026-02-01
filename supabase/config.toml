@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.auto-approve-shipments]
 verify_jwt = false
+
+[functions.admin-reset-password]
+verify_jwt = false
+
+[functions.create-user-with-password]
+verify_jwt = false
+
+[functions.create-user-profile]
+verify_jwt = false
+
+[functions.submit-company-registration]
+verify_jwt = false
