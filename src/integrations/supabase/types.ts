@@ -232,6 +232,13 @@ export type Database = {
             referencedRelation: "drivers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "driver_locations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_safe_view"
+            referencedColumns: ["id"]
+          },
         ]
       }
       driver_route_history: {
@@ -283,6 +290,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_route_history_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_safe_view"
             referencedColumns: ["id"]
           },
           {
@@ -444,6 +458,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gps_tracking_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_safe_view"
             referencedColumns: ["id"]
           },
           {
@@ -623,6 +644,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "route_tracking_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_safe_view"
             referencedColumns: ["id"]
           },
           {
@@ -918,6 +946,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_safe_view"
             referencedColumns: ["id"]
           },
           {
@@ -1229,7 +1264,71 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      drivers_safe_view: {
+        Row: {
+          created_at: string | null
+          current_latitude: number | null
+          current_longitude: number | null
+          email: string | null
+          id: string | null
+          is_online: boolean | null
+          last_location_update: string | null
+          last_ping: string | null
+          license_number_masked: string | null
+          license_type: string | null
+          name: string | null
+          national_id_masked: string | null
+          phone: string | null
+          transport_company_id: string | null
+          vehicle_plate: string | null
+          vehicle_type: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_latitude?: never
+          current_longitude?: never
+          email?: string | null
+          id?: string | null
+          is_online?: boolean | null
+          last_location_update?: never
+          last_ping?: string | null
+          license_number_masked?: never
+          license_type?: string | null
+          name?: string | null
+          national_id_masked?: never
+          phone?: string | null
+          transport_company_id?: string | null
+          vehicle_plate?: string | null
+          vehicle_type?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_latitude?: never
+          current_longitude?: never
+          email?: string | null
+          id?: string | null
+          is_online?: boolean | null
+          last_location_update?: never
+          last_ping?: string | null
+          license_number_masked?: never
+          license_type?: string | null
+          name?: string | null
+          national_id_masked?: never
+          phone?: string | null
+          transport_company_id?: string | null
+          vehicle_plate?: string | null
+          vehicle_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_transport_company_id_fkey"
+            columns: ["transport_company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       activate_user: {
@@ -1349,6 +1448,17 @@ export type Database = {
           total_waste_processed: number
         }[]
       }
+      get_company_profiles: {
+        Args: { target_company_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          is_active: boolean
+          role: string
+          user_id: string
+        }[]
+      }
       get_company_shipments: {
         Args: { company_type: string }
         Returns: {
@@ -1434,6 +1544,26 @@ export type Database = {
           vehicle_type: string
         }[]
       }
+      get_my_driver_profile: {
+        Args: never
+        Returns: {
+          created_at: string
+          current_latitude: number
+          current_longitude: number
+          email: string
+          id: string
+          is_online: boolean
+          last_location_update: string
+          license_number: string
+          license_type: string
+          name: string
+          national_id: string
+          phone: string
+          transport_company_id: string
+          vehicle_plate: string
+          vehicle_type: string
+        }[]
+      }
       get_shipment_with_signatures: {
         Args: { shipment_id_param: string }
         Returns: {
@@ -1463,6 +1593,16 @@ export type Database = {
           email: string
           role: string
           username: string
+        }[]
+      }
+      get_user_profile_safe: {
+        Args: { target_user_id: string }
+        Returns: {
+          company_id: string
+          full_name: string
+          is_active: boolean
+          role: string
+          user_id: string
         }[]
       }
       get_user_role: {
